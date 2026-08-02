@@ -186,7 +186,7 @@ else:
         if not ordens:
             st.info("📭 Nenhuma ordem registrada ainda")
         for o in ordens:
-            cor = STATUS[o[6]]
+          cor = STATUS.get(o[6], "#888888")
             st.markdown(f'''
             <div class="card-ordem">
                 <strong style="font-size:16px;">#{o[0]} | {o[2]} | <span style="color:{cor};">▌ {o[6]}</span></strong><br>
