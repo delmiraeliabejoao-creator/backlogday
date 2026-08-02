@@ -124,7 +124,7 @@ else:
         st.session_state.clear()
         st.rerun()
 
-    # ✅ MENU CORRIGIDO
+       # ✅ MENU CORRIGIDO 
     abas = []
     if perfil in ["Administrador", "Operador", "Inspetor de Manutenção"]:
         abas.append("📝 Abrir Ordem")
