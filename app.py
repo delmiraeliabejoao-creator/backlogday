@@ -124,56 +124,63 @@ else:
         st.session_state.clear()
         st.rerun()
 
-    menu = st.tabs([
-        "📝 Abrir Ordem" if perfil in ["Administrador", "Operador", "Inspetor de Manutenção"] else None,
-        "📋 Ordens de Serviço",
-        "📦 Pedidos de Peças" if perfil in ["Administrador", "Mecânico", "Almoxarifado"] else None,
-        "⚙️ Gerenciar" if perfil in ["Administrador", "Supervisor de Manutenção"] else None,
-        "📄 Relatórios" if perfil in ["Administrador", "Almoxarifado"] else None,
-        "👥 Usuários" if perfil == "Administrador" else None
-    ])
+    # ✅ MENU CORRIGIDO - SEM ERRO
+    abas = []
+    if perfil in ["Administrador", "Operador", "Inspetor de Manutenção"]:
+        abas.append("📝 Abrir Ordem")
+    abas.append("📋 Ordens de Serviço")
+    if perfil in ["Administrador", "Mecânico", "Almoxarifado"]:
+        abas.append("📦 Pedidos de Peças")
+    if perfil in ["Administrador", "Supervisor de Manutenção"]:
+        abas.append("⚙️ Gerenciar")
+    if perfil in ["Administrador", "Almoxarifado"]:
+        abas.append("📄 Relatórios")
+    if perfil == "Administrador":
+        abas.append("👥 Usuários")
 
-    # 1. ABERTURA DE ORDEM - CORRIGIDO E TROCANDO NOMES AUTOMATICAMENTE
-    with menu[0]:
-        st.header("📝 Nova Ordem de Manutenção")
-        tipo = st.radio("Tipo de Equipamento", ["Maquina Base", "Cabeçote"], horizontal=True)
-        lista = MAQUINA_BASE if tipo == "Maquina Base" else CABECOTE
-        cod = st.selectbox("Código do Equipamento", lista)
+    menu = st.tabs(abas)
 
-        # ✅ TROCA DE NOMES EXATA CONFORME PEDIDO
-        if tipo == "Maquina Base":
-            grupos = [
-                ("CABINE", ITENS_MAQUINA_BASE.get("CABINE", [])),
-                ("BRAÇO", ITENS_MAQUINA_BASE.get("BRAÇO", [])),
-                ("LANÇA", ITENS_MAQUINA_BASE.get("LANÇA", [])),
-                ("MAQUINA BASE", ITENS_MAQUINA_BASE.get("MAQUINA BASE", []))
-            ]
-        else:
-            grupos = [
-                ("DESGALHAMENTO", ITENS_CABECOTE.get("DESGALHAMENTO", [])),
-                ("ROLO", ITENS_CABECOTE.get("ROLO", [])),
-                ("TILT", ITENS_CABECOTE.get("TILT", [])),
-                ("ROTATOR", ITENS_CABECOTE.get("ROTATOR", []) + ITENS_CABECOTE.get("MOTOR DE SERRA", []) + ITENS_CABECOTE.get("CHASSIS", []))
-            ]
+    # 1. ABRIR ORDEM
+    if "📝 Abrir Ordem" in abas:
+        with menu[abas.index("📝 Abrir Ordem")]:
+            st.header("📝 Nova Ordem de Manutenção")
+            tipo = st.radio("Tipo de Equipamento", ["Maquina Base", "Cabeçote"], horizontal=True)
+            lista = MAQUINA_BASE if tipo == "Maquina Base" else CABECOTE
+            cod = st.selectbox("Código do Equipamento", lista)
 
-        pendentes = []
-        for nome_grupo, lista_itens in grupos:
-            st.subheader(f"🔹 {nome_grupo}")
-            sel = st.multiselect(f"Selecione os itens com problema", lista_itens)
-            pendentes.extend(sel)
+            if tipo == "Maquina Base":
+                grupos = [
+                    ("CABINE", ITENS_MAQUINA_BASE.get("CABINE", [])),
+                    ("BRAÇO", ITENS_MAQUINA_BASE.get("BRAÇO", [])),
+                    ("LANÇA", ITENS_MAQUINA_BASE.get("LANÇA", [])),
+                    ("MAQUINA BASE", ITENS_MAQUINA_BASE.get("MAQUINA BASE", []))
+                ]
+            else:
+                grupos = [
+                    ("DESGALHAMENTO", ITENS_CABECOTE.get("DESGALHAMENTO", [])),
+                    ("ROLO", ITENS_CABECOTE.get("ROLO", [])),
+                    ("TILT", ITENS_CABECOTE.get("TILT", [])),
+                    ("ROTATOR", ITENS_CABECOTE.get("ROTATOR", []) + ITENS_CABECOTE.get("MOTOR DE SERRA", []) + ITENS_CABECOTE.get("CHASSIS", []))
+                ]
 
-        desc = st.text_area("📝 Descrição Detalhada do Problema", height=120)
-        midia = st.file_uploader("📷 Anexar fotos / vídeos", accept_multiple_files=True)
+            pendentes = []
+            for nome_grupo, lista_itens in grupos:
+                st.subheader(f"🔹 {nome_grupo}")
+                sel = st.multiselect(f"Selecione os itens com problema", lista_itens)
+                pendentes.extend(sel)
 
-        if st.button("🚀 GERAR ORDEM"):
-            executar('''INSERT INTO ordens
-                (tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, solicitante)
-                VALUES (?, ?, ?, ?, ?)''',
-                (tipo, cod, str(pendentes), desc, st.session_state.email))
-            st.success("✅ Ordem gerada com sucesso! Status: Aguardando Serviço")
+            desc = st.text_area("📝 Descrição Detalhada do Problema", height=120)
+            midia = st.file_uploader("📷 Anexar fotos / vídeos", accept_multiple_files=True)
 
-    # 2. LISTA DE ORDENS
-    with menu[1]:
+            if st.button("🚀 GERAR ORDEM"):
+                executar('''INSERT INTO ordens
+                    (tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, solicitante)
+                    VALUES (?, ?, ?, ?, ?)''',
+                    (tipo, cod, str(pendentes), desc, st.session_state.email))
+                st.success("✅ Ordem gerada com sucesso! Status: Aguardando Serviço")
+
+    # 2. ORDENS DE SERVIÇO
+    with menu[abas.index("📋 Ordens de Serviço")]:
         st.header("📋 Ordens de Serviço")
         ordens = consultar("SELECT * FROM ordens ORDER BY data DESC")
         if not ordens:
@@ -189,7 +196,6 @@ else:
             </div>
             ''', unsafe_allow_html=True)
 
-            # Ações por perfil
             if perfil == "Mecânico" and o[6] in ["Aguardando Serviço", "Aguardando Peça"]:
                 col1, col2 = st.columns(2)
                 with col1:
@@ -223,8 +229,8 @@ else:
                     st.rerun()
 
     # 3. PEDIDOS DE PEÇAS
-    if len(menu) > 2:
-        with menu[2]:
+    if "📦 Pedidos de Peças" in abas:
+        with menu[abas.index("📦 Pedidos de Peças")]:
             st.header("📦 Pedidos de Peças")
             ped = consultar("SELECT * FROM pedidos_pecas ORDER BY id DESC")
             if not ped:
@@ -238,9 +244,9 @@ else:
                 </div>
                 ''', unsafe_allow_html=True)
 
-    # 4. GERENCIAR ORDENS
-    if len(menu) > 3:
-        with menu[3]:
+    # 4. GERENCIAR
+    if "⚙️ Gerenciar" in abas:
+        with menu[abas.index("⚙️ Gerenciar")]:
             st.header("⚙️ Alterar Status")
             ordens = consultar("SELECT id, codigo_equipamento, status FROM ordens")
             if ordens:
@@ -253,8 +259,8 @@ else:
                     st.success("✅ Status atualizado!")
 
     # 5. RELATÓRIOS
-    if len(menu) > 4:
-        with menu[4]:
+    if "📄 Relatórios" in abas:
+        with menu[abas.index("📄 Relatórios")]:
             st.header("📄 Relatórios")
             filtro = st.selectbox("Filtrar por Status", ["Todos"] + list(STATUS.keys()))
             if st.button("📥 Gerar Relatório PDF"):
@@ -274,39 +280,35 @@ else:
                 with open(nome_arq, "rb") as f:
                     st.download_button("⬇️ Baixar Arquivo", f, file_name=nome_arq)
 
-         # 6. GERENCIAR USUÁRIOS (SÓ ADMIN)
-    if len(menu) > 5:
-        with menu[5]:
+    # 6. USUÁRIOS (SÓ ADM - LISTA + EXCLUIR)
+    if "👥 Usuários" in abas:
+        with menu[abas.index("👥 Usuários")]:
             st.header("👤 Gerenciar Usuários")
 
-            # 📋 LISTA COM TODOS USUÁRIOS + BOTÃO EXCLUIR
             st.subheader("📋 Usuários Cadastrados")
             lista_usuarios = consultar("SELECT id, email, perfil FROM usuarios ORDER BY id")
-            
             if lista_usuarios:
                 for u in lista_usuarios:
-                    id_user, email, perfil = u
+                    id_user, email, perfil_user = u
                     st.markdown(f"""
                     <div class="card-ordem">
                         <strong>ID: {id_user}</strong><br>
                         E-mail: {email}<br>
-                        Perfil: {perfil}
+                        Perfil: {perfil_user}
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # BOTÃO EXCLUIR (não aparece para o próprio ADM logado)
                     if email != st.session_state.email:
                         if st.button(f"🗑️ Excluir {email}", key=f"del_{id_user}"):
                             executar("DELETE FROM usuarios WHERE id = ?", (id_user,))
                             st.success(f"✅ Usuário {email} excluído!")
                             st.rerun()
                     else:
-                        st.info("🔒 Este é o seu acesso — não pode ser excluído aqui")
+                        st.info("🔒 Este é o seu acesso — não pode ser excluído")
                     st.markdown("---")
             else:
                 st.info("📭 Nenhum usuário cadastrado ainda")
 
-            # ➕ CADASTRAR NOVO USUÁRIO
             st.subheader("➕ Cadastrar Novo Usuário")
             with st.form("cad_user"):
                 em = st.text_input("E-mail")
@@ -315,7 +317,7 @@ else:
                 if st.form_submit_button("✅ Cadastrar"):
                     try:
                         executar("INSERT INTO usuarios (email, senha, perfil) VALUES (?, ?, ?)", (em, se, pe))
-                        st.success("✅ Usuário cadastrado! Atualize a página para ver.")
+                        st.success("✅ Usuário cadastrado! Atualize a página.")
                         st.rerun()
                     except:
                         st.error("⚠️ E-mail já cadastrado")
