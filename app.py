@@ -274,10 +274,30 @@ else:
                 with open(nome_arq, "rb") as f:
                     st.download_button("⬇️ Baixar Arquivo", f, file_name=nome_arq)
 
-    # 6. CADASTRAR USUÁRIOS
+      # 6. CADASTRAR E VISUALIZAR USUÁRIOS (SÓ ADMIN)
     if len(menu) > 5:
         with menu[5]:
-            st.header("👤 Cadastrar Usuário")
+            st.header("👤 Gerenciar Usuários")
+
+            # 📋 LISTA DE TODOS OS USUÁRIOS CADASTRADOS
+            st.subheader("📋 Usuários Cadastrados")
+            lista_usuarios = consultar("SELECT id, email, perfil FROM usuarios ORDER BY id")
+            if lista_usuarios:
+                for u in lista_usuarios:
+                    st.markdown(f"""
+                    <div class="card-ordem">
+                        <strong>ID: {u[0]}</strong><br>
+                        E-mail: {u[1]}<br>
+                        Perfil: {u[2]}
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("📭 Nenhum usuário cadastrado ainda")
+
+            st.markdown("---")
+
+            # ✏️ CADASTRAR NOVO USUÁRIO
+            st.subheader("➕ Cadastrar Novo Usuário")
             with st.form("cad_user"):
                 em = st.text_input("E-mail")
                 se = st.text_input("Senha", type="password")
@@ -285,6 +305,8 @@ else:
                 if st.form_submit_button("✅ Cadastrar"):
                     try:
                         executar("INSERT INTO usuarios (email, senha, perfil) VALUES (?, ?, ?)", (em, se, pe))
-                        st.success("✅ Usuário cadastrado!")
+                        st.success("✅ Usuário cadastrado com sucesso! Atualize a página para ver na lista.")
+                        st.rerun()
                     except:
-                        st.error("⚠️ E-mail já existe")
+                        st.error("⚠️ Esse e-mail já está cadastrado")
+
