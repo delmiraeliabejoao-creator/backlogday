@@ -4,7 +4,7 @@ from fpdf import FPDF
 from dados import *
 from banco import *
 
-# 🎨 TEMA FUTURISTA
+# 🎨 CONFIGURAÇÃO INICIAL
 st.set_page_config(
     page_title="BACKLOGDAY",
     layout="wide",
@@ -15,9 +15,7 @@ st.set_page_config(
 # 🔹 ESTILOS PERSONALIZADOS
 st.markdown("""
 <style>
-    * {
-        font-family: 'Segoe UI', sans-serif;
-    }
+    * { font-family: 'Segoe UI', sans-serif; }
     .stApp {
         background: linear-gradient(135deg, #050814 0%, #0F172A 50%, #050814 100%);
         color: #E0F7FF;
@@ -33,12 +31,10 @@ st.markdown("""
         border: 1px solid rgba(0, 212, 255, 0.4);
         border-radius: 8px;
         box-shadow: 0 0 12px rgba(0, 180, 216, 0.3);
-        transition: all 0.3s ease;
     }
     .stButton>button:hover {
         background: linear-gradient(90deg, #00B4D8, #00D4FF);
         box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
-        transform: translateY(-1px);
     }
     .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div {
         background: rgba(10, 20, 40, 0.8);
@@ -56,13 +52,11 @@ st.markdown("""
         background: transparent;
         color: #8FBBDB;
         border-radius: 6px;
-        border: 1px solid transparent;
     }
     .stTabs [aria-selected="true"] {
         background: rgba(0, 180, 216, 0.2);
         color: #00D4FF;
         border: 1px solid #00D4FF;
-        box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
     }
     .card-ordem {
         background: rgba(8, 15, 35, 0.9);
@@ -70,7 +64,6 @@ st.markdown("""
         padding: 15px;
         margin: 10px 0;
         border: 1px solid rgba(0, 212, 255, 0.2);
-        box-shadow: 0 0 15px rgba(0, 180, 216, 0.15);
     }
     .stSidebar {
         background: rgba(5, 8, 20, 0.95);
@@ -79,7 +72,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 🔹 INICIA BANCO DE DADOS
+# 🔹 INICIA BANCO
 iniciar_banco()
 
 # ------------------- TELA DE LOGIN -------------------
@@ -88,9 +81,9 @@ if "logado" not in st.session_state:
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         st.markdown("""
-        <div style="text-align:center; padding:30px; border:1px solid rgba(0,212,255,0.4); border-radius:15px; background:rgba(8,15,35,0.9); box-shadow:0 0 30px rgba(0,180,216,0.2);">
-            <h1 style="font-size:42px; margin-bottom:5px;">BACKLOGDAY</h1>
-            <p style="color:#8FBBDB; font-size:16px;">Sistema Inteligente de Gestão de Manutenção</p>
+        <div style="text-align:center; padding:30px; border:1px solid rgba(0,212,255,0.4); border-radius:15px; background:rgba(8,15,35,0.9);">
+            <h1 style="font-size:42px;">BACKLOGDAY</h1>
+            <p style="color:#8FBBDB;">Sistema Inteligente de Gestão de Manutenção</p>
         </div>
         """, unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
@@ -124,7 +117,7 @@ else:
         st.session_state.clear()
         st.rerun()
 
-       # ✅ MENU CORRIGIDO 
+    # ✅ MONTAGEM CORRETA DAS ABAS - SEM ERRO
     abas = []
     if perfil in ["Administrador", "Operador", "Inspetor de Manutenção"]:
         abas.append("📝 Abrir Ordem")
@@ -140,7 +133,7 @@ else:
 
     menu = st.tabs(abas)
 
-    # 1. ABRIR ORDEM (SALVA DESCRIÇÃO E ARQUIVOS)
+    # 1. ABRIR ORDEM
     if "📝 Abrir Ordem" in abas:
         with menu[abas.index("📝 Abrir Ordem")]:
             st.header("📝 Nova Ordem de Manutenção")
@@ -178,12 +171,11 @@ else:
                     (data, tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, solicitante, midia)
                     VALUES (?, ?, ?, ?, ?, ?, ?)''',
                     (datetime.now().strftime("%d/%m/%Y %H:%M"), tipo, cod, str(pendentes), desc, st.session_state.email, arquivos))
-                st.success("✅ Ordem gerada com sucesso! Status: Aguardando Serviço")
+                st.success("✅ Ordem gerada com sucesso!")
 
-    # 2. ORDENS DE SERVIÇO (BOTÃO ATUALIZAR + DETALHES COMPLETOS)
+    # 2. ORDENS DE SERVIÇO
     with menu[abas.index("📋 Ordens de Serviço")]:
         st.header("📋 Ordens de Serviço")
-
         if st.button("🔄 Atualizar"):
             st.rerun()
 
@@ -194,20 +186,18 @@ else:
             cor = STATUS.get(o[6], "#888888")
             st.markdown(f'''
             <div class="card-ordem">
-                <strong style="font-size:16px;">#{o[0]} | {o[2]} | <span style="color:{cor};">▌ {o[6] if o[6] else "Aguardando Serviço"}</span></strong><br>
-                <span style="color:#8FBBDB; font-size:13px;">Data: {o[1]} | Solicitante: {o[8]}</span><br>
+                <strong>#{o[0]} | {o[2]} | <span style="color:{cor};">{o[6] if o[6] else "Aguardando Serviço"}</span></strong><br>
+                <span style="color:#8FBBDB;">Data: {o[1]} | Solicitante: {o[8]}</span><br>
                 Itens: {o[3]}
             </div>
             ''', unsafe_allow_html=True)
 
-            # EXIBE DESCRIÇÃO COMPLETA E ANEXOS
             with st.expander(f"📝 Ver detalhes completos da Ordem #{o[0]}"):
-                st.write("**📝 Descrição Detalhada do Problema:**")
-                st.info(o[4] if o[4] else "Nenhuma descrição foi informada")
-                st.write("**📷 Arquivos Anexados:**")
-                st.info(o[9] if len(o) > 9 and o[9] else "Nenhum arquivo foi enviado")
+                st.write("**Descrição do Problema:**")
+                st.info(o[4] if o[4] else "Nenhuma descrição informada")
+                st.write("**Arquivos Anexados:**")
+                st.info(o[9] if len(o) > 9 and o[9] else "Nenhum arquivo enviado")
 
-            # Ações por perfil
             if perfil == "Mecânico" and (o[6] in ["Aguardando Serviço", "Aguardando Peça"] or o[6] is None):
                 col1, col2 = st.columns(2)
                 with col1:
@@ -220,7 +210,7 @@ else:
                             qtd = st.number_input("Quantidade", min_value=1, value=1)
                             cod_p = st.text_input("Código da Peça")
                             nome_p = st.text_input("Nome da Peça")
-                            if st.form_submit_button("Confirmar Pedido"):
+                            if st.form_submit_button("Confirmar"):
                                 executar('''INSERT INTO pedidos_pecas
                                     (id_ordem, quantidade, codigo_peca, nome_peca, solicitante, tipo_equipamento)
                                     VALUES (?, ?, ?, ?, ?, ?)''',
@@ -233,13 +223,12 @@ else:
                     executar("UPDATE ordens SET status = 'Peça Solicitada' WHERE id = ?", (o[0],))
                     st.rerun()
                 if st.button(f"🔔 Notificar Chegada #{o[0]}"):
-                    st.success("📤 Notificação enviada ao Mecânico!")
+                    st.success("📤 Notificação enviada!")
 
             if perfil == "Supervisor de Manutenção" and o[6] == "Concluída":
                 if st.button(f"⚫ Finalizar Ordem #{o[0]}"):
                     executar("UPDATE ordens SET status = 'Finalizada' WHERE id = ?", (o[0],))
                     st.rerun()
-
             st.markdown("---")
 
     # 3. PEDIDOS DE PEÇAS
@@ -270,7 +259,7 @@ else:
                 novo_status = st.selectbox("Novo Status", list(STATUS.keys()))
                 if st.button("🔄 Atualizar Status"):
                     executar("UPDATE ordens SET status = ? WHERE id = ?", (novo_status, id_sel))
-                    st.success("✅ Status atualizado!")
+                    st.success("✅ Atualizado!")
 
     # 5. RELATÓRIOS
     if "📄 Relatórios" in abas:
@@ -284,21 +273,18 @@ else:
                 pdf.cell(0, 12, "RELATÓRIO BACKLOGDAY", ln=True, align="C")
                 pdf.ln(8)
                 pdf.set_font("Arial", size=11)
-
                 dados = consultar("SELECT * FROM ordens") if filtro == "Todos" else consultar("SELECT * FROM ordens WHERE status = ?", (filtro,))
                 for o in dados:
                     pdf.cell(0, 8, f"#{o[0]} | {o[2]} | {o[6] if o[6] else 'Aguardando Serviço'} | {o[1]}", ln=True)
-
                 nome_arq = f"relatorio_{datetime.now().strftime('%d%m%Y_%H%M')}.pdf"
                 pdf.output(nome_arq)
                 with open(nome_arq, "rb") as f:
-                    st.download_button("⬇️ Baixar Arquivo", f, file_name=nome_arq)
+                    st.download_button("⬇️ Baixar", f, file_name=nome_arq)
 
-    # 6. USUÁRIOS (SÓ ADM - LISTA + EXCLUIR)
+    # 6. USUÁRIOS (SÓ ADM)
     if "👥 Usuários" in abas:
         with menu[abas.index("👥 Usuários")]:
             st.header("👤 Gerenciar Usuários")
-
             st.subheader("📋 Usuários Cadastrados")
             lista_usuarios = consultar("SELECT id, email, perfil FROM usuarios ORDER BY id")
             if lista_usuarios:
@@ -311,19 +297,18 @@ else:
                         Perfil: {perfil_user}
                     </div>
                     """, unsafe_allow_html=True)
-
                     if email != st.session_state.email:
                         if st.button(f"🗑️ Excluir {email}", key=f"del_{id_user}"):
                             executar("DELETE FROM usuarios WHERE id = ?", (id_user,))
-                            st.success(f"✅ Usuário {email} excluído!")
+                            st.success(f"✅ {email} excluído!")
                             st.rerun()
                     else:
-                        st.info("🔒 Este é o seu acesso — não pode ser excluído")
+                        st.info("🔒 Não pode excluir seu próprio acesso")
                     st.markdown("---")
             else:
-                st.info("📭 Nenhum usuário cadastrado ainda")
+                st.info("📭 Nenhum usuário cadastrado")
 
-            st.subheader("➕ Cadastrar Novo Usuário")
+            st.subheader("➕ Cadastrar Novo")
             with st.form("cad_user"):
                 em = st.text_input("E-mail")
                 se = st.text_input("Senha", type="password")
@@ -331,7 +316,7 @@ else:
                 if st.form_submit_button("✅ Cadastrar"):
                     try:
                         executar("INSERT INTO usuarios (email, senha, perfil) VALUES (?, ?, ?)", (em, se, pe))
-                        st.success("✅ Usuário cadastrado! Atualize a página.")
+                        st.success("✅ Cadastrado!")
                         st.rerun()
                     except:
-                        st.error("⚠️ E-mail já cadastrado")
+                        st.error("⚠️ E-mail já existe")
