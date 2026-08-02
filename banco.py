@@ -19,7 +19,6 @@ def consultar(comando, parametros=()):
     return resultado
 
 def iniciar_banco():
-    # Tabela Usuários
     executar('''CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE,
@@ -27,21 +26,19 @@ def iniciar_banco():
         perfil TEXT
     )''')
 
-    # Tabela Ordens (COM CAMPO MIDIA)
-   executar('''CREATE TABLE IF NOT EXISTS ordens (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    data TEXT,
-    tipo_equipamento TEXT,
-    codigo_equipamento TEXT,
-    itens_pendentes TEXT,
-    descricao TEXT,
-    status TEXT DEFAULT 'Aguardando Serviço',
-    mecanico TEXT,
-    solicitante TEXT,
-    midia TEXT
-)''')
+    executar('''CREATE TABLE IF NOT EXISTS ordens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        data TEXT,
+        tipo_equipamento TEXT,
+        codigo_equipamento TEXT,
+        itens_pendentes TEXT,
+        descricao TEXT,
+        status TEXT DEFAULT 'Aguardando Serviço',
+        mecanico TEXT,
+        solicitante TEXT,
+        midia TEXT
+    )''')
 
-    # Tabela Pedidos de Peças
     executar('''CREATE TABLE IF NOT EXISTS pedidos_pecas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_ordem INTEGER,
@@ -52,7 +49,6 @@ def iniciar_banco():
         tipo_equipamento TEXT
     )''')
 
-    # Cadastra usuário ADM padrão se não existir
     try:
         executar("INSERT INTO usuarios (email, senha, perfil) VALUES (?, ?, ?)",
                  ("admin@backlogday.com", "admin123", "Administrador"))
