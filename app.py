@@ -3,6 +3,7 @@ from datetime import datetime
 from fpdf import FPDF
 from dados import *
 from banco import *
+
 # 🎨 CONFIGURAÇÃO INICIAL
 st.set_page_config(
     page_title="BACKLOGDAY",
@@ -71,7 +72,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 🔹 INICIA BANCO
+# 🔹 INICIA BANCO DE DADOS
 iniciar_banco()
 
 # ------------------- TELA DE LOGIN -------------------
@@ -116,7 +117,7 @@ else:
         st.session_state.clear()
         st.rerun()
 
-    # ✅ MONTAGEM CORRETA DAS ABAS - SEM ERRO
+    # ✅ MONTAGEM CORRETA DAS ABAS
     abas = []
     if perfil in ["Administrador", "Operador", "Inspetor de Manutenção"]:
         abas.append("📝 Abrir Ordem")
@@ -163,24 +164,26 @@ else:
 
             desc = st.text_area("📝 Descrição Detalhada do Problema", height=120)
             midia = st.file_uploader("📷 Anexar fotos / vídeos", accept_multiple_files=True)
-if st.button("🚀 GERAR ORDEM"):
-    arquivos = ", ".join([arq.name for arq in midia]) if midia else "Sem arquivos anexados"
-    executar('''INSERT INTO ordens
-        (data, tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, status, mecanico, solicitante, midia)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-        (
-            datetime.now().strftime("%d/%m/%Y %H:%M"),
-            tipo,
-            cod,
-            str(pendentes),
-            desc,
-            "Aguardando Serviço",
-            "",
-            st.session_state.email,
-            arquivos
-        ))
-    st.success("✅ Ordem gerada com sucesso!")
-              # 2. ORDENS DE SERVIÇO
+
+            if st.button("🚀 GERAR ORDEM"):
+                arquivos = ", ".join([arq.name for arq in midia]) if midia else "Sem arquivos anexados"
+                executar('''INSERT INTO ordens
+                    (data, tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, status, mecanico, solicitante, midia)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    (
+                        datetime.now().strftime("%d/%m/%Y %H:%M"),
+                        tipo,
+                        cod,
+                        str(pendentes),
+                        desc,
+                        "Aguardando Serviço",
+                        "",
+                        st.session_state.email,
+                        arquivos
+                    ))
+                st.success("✅ Ordem gerada com sucesso!")
+
+    # 2. ORDENS DE SERVIÇO
     with menu[abas.index("📋 Ordens de Serviço")]:
         st.header("📋 Ordens de Serviço")
         if st.button("🔄 Atualizar"):
