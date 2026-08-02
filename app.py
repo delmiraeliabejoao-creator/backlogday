@@ -179,14 +179,14 @@ else:
                     (tipo, cod, str(pendentes), desc, st.session_state.email))
                 st.success("✅ Ordem gerada com sucesso! Status: Aguardando Serviço")
 
-    # 2. ORDENS DE SERVIÇO
+       # 2. ORDENS DE SERVIÇO
     with menu[abas.index("📋 Ordens de Serviço")]:
         st.header("📋 Ordens de Serviço")
         ordens = consultar("SELECT * FROM ordens ORDER BY data DESC")
         if not ordens:
             st.info("📭 Nenhuma ordem registrada ainda")
         for o in ordens:
-          cor = STATUS.get(o[6], "#888888")
+            cor = STATUS.get(o[6], "#888888")
             st.markdown(f'''
             <div class="card-ordem">
                 <strong style="font-size:16px;">#{o[0]} | {o[2]} | <span style="color:{cor};">▌ {o[6]}</span></strong><br>
@@ -196,6 +196,7 @@ else:
             </div>
             ''', unsafe_allow_html=True)
 
+            # Ações por perfil
             if perfil == "Mecânico" and o[6] in ["Aguardando Serviço", "Aguardando Peça"]:
                 col1, col2 = st.columns(2)
                 with col1:
