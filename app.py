@@ -178,12 +178,11 @@ else:
                     VALUES (?, ?, ?, ?, ?)''',
                     (tipo, cod, str(pendentes), desc, st.session_state.email))
                 st.success("✅ Ordem gerada com sucesso! Status: Aguardando Serviço")
-
-          # 2. ORDENS DE SERVIÇO
+    # 2. ORDENS DE SERVIÇO
     with menu[abas.index("📋 Ordens de Serviço")]:
         st.header("📋 Ordens de Serviço")
 
-        # ✅ BOTÃO ATUALIZAR
+        # Botão Atualizar
         if st.button("🔄 Atualizar"):
             st.rerun()
 
@@ -196,10 +195,14 @@ else:
             <div class="card-ordem">
                 <strong style="font-size:16px;">#{o[0]} | {o[2]} | <span style="color:{cor};">▌ {o[6] if o[6] else "Aguardando Serviço"}</span></strong><br>
                 <span style="color:#8FBBDB; font-size:13px;">Data: {o[1]} | Solicitante: {o[8]}</span><br>
-                Itens: {o[3]}<br>
-                Descrição: {o[4]}
+                Itens: {o[3]}
             </div>
             ''', unsafe_allow_html=True)
+
+            # ✅ BOTÃO PARA VER DESCRIÇÃO COMPLETA
+            with st.expander(f"📝 Ver descrição completa da Ordem #{o[0]}"):
+                st.write(f"**Descrição do problema:**")
+                st.info(o[4] if o[4] else "Sem descrição informada")
 
             # Ações por perfil
             if perfil == "Mecânico" and (o[6] in ["Aguardando Serviço", "Aguardando Peça"] or o[6] is None):
@@ -233,6 +236,8 @@ else:
                 if st.button(f"⚫ Finalizar Ordem #{o[0]}"):
                     executar("UPDATE ordens SET status = 'Finalizada' WHERE id = ?", (o[0],))
                     st.rerun()
+
+            st.markdown("---")
 
     # 3. PEDIDOS DE PEÇAS
     if "📦 Pedidos de Peças" in abas:
