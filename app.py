@@ -137,7 +137,7 @@ else:
     if "📝 Abrir Ordem" in abas:
         with menu[abas.index("📝 Abrir Ordem")]:
             st.header("📝 Nova Ordem de Manutenção")
-                       tipo = st.radio("Tipo de Equipamento", ["Maquina Base", "Cabeçote"], horizontal=True)
+            tipo = st.radio("Tipo de Equipamento", ["Maquina Base", "Cabeçote"], horizontal=True)
             lista = MAQUINA_BASE if tipo == "Maquina Base" else CABECOTE
             cod = st.selectbox("Código do Equipamento", lista)
 
