@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import datetime
 from fpdf import FPDF
 from dados import *
-from banco import *
+from banco import *  
 
 # 🎨 CONFIGURAÇÃO INICIAL
 st.set_page_config(
