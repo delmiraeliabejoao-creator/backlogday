@@ -111,8 +111,6 @@ if "logado" not in st.session_state:
                 else:
                     st.error("⚠️ Credenciais inválidas")
 
-        st.info("🔑 Acesso padrão: admin@backlogday.com | admin123")
-
 # ------------------- SISTEMA PRINCIPAL -------------------
 else:
     perfil = st.session_state.perfil
