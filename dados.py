@@ -11,9 +11,9 @@ PERFIS = [
 
 # STATUS E CORES
 STATUS = {
-    "Aguardando Serviço": "#FFC107",
-    "Aguardando Peça": "#9C27B0",
-    "Peça Solicitada": "#2196F3",
+    "Aguardando Serviço": "#FF9800",
+    "Aguardando Peça": "#2196F3",
+    "Peça Solicitada": "#9C27B0",
     "Concluída": "#4CAF50",
     "Finalizada": "#607D8B"
 }
