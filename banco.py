@@ -13,18 +13,19 @@ def iniciar_banco():
     )''')
 
     # Tabela de Ordens
-    cursor.executar('''CREATE TABLE IF NOT EXISTS ordens (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    data TEXT,
-    tipo_equipamento TEXT,
-    codigo_equipamento TEXT,
-    itens_pendentes TEXT,
-    descricao TEXT,
-    status TEXT DEFAULT 'Aguardando Serviço',
-    mecanico TEXT,
-    solicitante TEXT,
-    midia TEXT -- ✅ Campo para salvar os arquivos
-)''')
+    def iniciar_banco():
+    executar('''CREATE TABLE IF NOT EXISTS ordens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        data TEXT,
+        tipo_equipamento TEXT,
+        codigo_equipamento TEXT,
+        itens_pendentes TEXT,
+        descricao TEXT,
+        status TEXT DEFAULT 'Aguardando Serviço',
+        mecanico TEXT,
+        solicitante TEXT,
+        midia TEXT
+    )''')
 
     # Tabela de Pedidos de Peças
     cursor.execute('''CREATE TABLE IF NOT EXISTS pedidos_pecas (
