@@ -124,7 +124,7 @@ else:
         st.session_state.clear()
         st.rerun()
 
-    # ✅ MENU CORRIGIDO - SEM ERRO
+    # ✅ MENU CORRIGIDO
     abas = []
     if perfil in ["Administrador", "Operador", "Inspetor de Manutenção"]:
         abas.append("📝 Abrir Ordem")
@@ -140,7 +140,7 @@ else:
 
     menu = st.tabs(abas)
 
-    # 1. ABRIR ORDEM
+    # 1. ABRIR ORDEM (SALVA DESCRIÇÃO E ARQUIVOS)
     if "📝 Abrir Ordem" in abas:
         with menu[abas.index("📝 Abrir Ordem")]:
             st.header("📝 Nova Ordem de Manutenção")
@@ -173,16 +173,17 @@ else:
             midia = st.file_uploader("📷 Anexar fotos / vídeos", accept_multiple_files=True)
 
             if st.button("🚀 GERAR ORDEM"):
+                arquivos = ", ".join([arq.name for arq in midia]) if midia else "Sem arquivos anexados"
                 executar('''INSERT INTO ordens
-                    (tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, solicitante)
-                    VALUES (?, ?, ?, ?, ?)''',
-                    (tipo, cod, str(pendentes), desc, st.session_state.email))
+                    (data, tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, solicitante, midia)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                    (datetime.now().strftime("%d/%m/%Y %H:%M"), tipo, cod, str(pendentes), desc, st.session_state.email, arquivos))
                 st.success("✅ Ordem gerada com sucesso! Status: Aguardando Serviço")
-    # 2. ORDENS DE SERVIÇO
+
+    # 2. ORDENS DE SERVIÇO (BOTÃO ATUALIZAR + DETALHES COMPLETOS)
     with menu[abas.index("📋 Ordens de Serviço")]:
         st.header("📋 Ordens de Serviço")
 
-        # Botão Atualizar
         if st.button("🔄 Atualizar"):
             st.rerun()
 
@@ -199,10 +200,12 @@ else:
             </div>
             ''', unsafe_allow_html=True)
 
-            # ✅ BOTÃO PARA VER DESCRIÇÃO COMPLETA
-            with st.expander(f"📝 Ver descrição completa da Ordem #{o[0]}"):
-                st.write(f"**Descrição do problema:**")
-                st.info(o[4] if o[4] else "Sem descrição informada")
+            # EXIBE DESCRIÇÃO COMPLETA E ANEXOS
+            with st.expander(f"📝 Ver detalhes completos da Ordem #{o[0]}"):
+                st.write("**📝 Descrição Detalhada do Problema:**")
+                st.info(o[4] if o[4] else "Nenhuma descrição foi informada")
+                st.write("**📷 Arquivos Anexados:**")
+                st.info(o[9] if len(o) > 9 and o[9] else "Nenhum arquivo foi enviado")
 
             # Ações por perfil
             if perfil == "Mecânico" and (o[6] in ["Aguardando Serviço", "Aguardando Peça"] or o[6] is None):
@@ -284,7 +287,7 @@ else:
 
                 dados = consultar("SELECT * FROM ordens") if filtro == "Todos" else consultar("SELECT * FROM ordens WHERE status = ?", (filtro,))
                 for o in dados:
-                    pdf.cell(0, 8, f"#{o[0]} | {o[2]} | {o[6]} | {o[1]}", ln=True)
+                    pdf.cell(0, 8, f"#{o[0]} | {o[2]} | {o[6] if o[6] else 'Aguardando Serviço'} | {o[1]}", ln=True)
 
                 nome_arq = f"relatorio_{datetime.now().strftime('%d%m%Y_%H%M')}.pdf"
                 pdf.output(nome_arq)
