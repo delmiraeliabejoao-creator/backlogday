@@ -141,7 +141,7 @@ else:
             lista = MAQUINA_BASE if tipo == "Maquina Base" else CABECOTE
             cod = st.selectbox("Código do Equipamento", lista)
 
-            if tipo == "Maquina Base":
+                        if tipo == "Maquina Base":
                 grupos = [
                     ("CABINE", ITENS_MAQUINA_BASE.get("CABINE", [])),
                     ("BRAÇO", ITENS_MAQUINA_BASE.get("BRAÇO", [])),
@@ -156,7 +156,7 @@ else:
                     ("ROTATOR", ITENS_CABECOTE.get("ROTATOR", []) + ITENS_CABECOTE.get("MOTOR DE SERRA", []) + ITENS_CABECOTE.get("CHASSIS", []))
                 ]
 
-                       pendentes = []
+            pendentes = []
             for nome_grupo, lista_itens in grupos:
                 st.subheader(f"🔹 {nome_grupo}")
                 sel = st.multiselect(f"Selecione os itens com problema", lista_itens)
