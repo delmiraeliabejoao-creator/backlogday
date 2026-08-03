@@ -26,7 +26,7 @@ def iniciar_banco():
         perfil TEXT
     )''')
 
-        executar('''CREATE TABLE IF NOT EXISTS ordens (
+    executar('''CREATE TABLE IF NOT EXISTS ordens (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data TEXT,
         tipo_equipamento TEXT,
