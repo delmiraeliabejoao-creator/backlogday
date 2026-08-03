@@ -137,7 +137,7 @@ else:
     if "📝 Abrir Ordem" in abas:
         with menu[abas.index("📝 Abrir Ordem")]:
             st.header("📝 Nova Ordem de Manutenção")
-            tipo = st.radio("Tipo de Equipamento", ["Maquina Base", "Cabeçote"], horizontal=True)
+                        tipo = st.radio("Tipo de Equipamento", ["Maquina Base", "Cabeçote"], horizontal=True)
             lista = MAQUINA_BASE if tipo == "Maquina Base" else CABECOTE
             cod = st.selectbox("Código do Equipamento", lista)
 
@@ -156,7 +156,7 @@ else:
                     ("ROTATOR", ITENS_CABECOTE.get("ROTATOR", []) + ITENS_CABECOTE.get("MOTOR DE SERRA", []) + ITENS_CABECOTE.get("CHASSIS", []))
                 ]
 
-                        pendentes = []
+            pendentes = []
             for nome_grupo, lista_itens in grupos:
                 st.subheader(f"🔹 {nome_grupo}")
                 sel = st.multiselect(f"Selecione os itens com problema", lista_itens)
