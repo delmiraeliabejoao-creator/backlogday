@@ -12,6 +12,14 @@ st.set_page_config(
     menu_items=None
 )
 
+# 🎨 CONFIGURAÇÃO INICIAL
+st.set_page_config(
+    page_title="BACKLOGDAY",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items=None
+)
+
 # 🔹 ESTILOS PERSONALIZADOS
 st.markdown("""
 <style>
