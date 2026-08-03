@@ -4,14 +4,12 @@ from fpdf import FPDF
 from dados import *
 from banco import *
 
-# 🎨 CONFIGURAÇÃO INICIAL
+# Configuração da página
 st.set_page_config(
     page_title="BACKLOGDAY",
     layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items=None
+    initial_sidebar_state="expanded"
 )
-
 # 🔹 ESTILOS PERSONALIZADOS
 st.markdown("""
 <style>
