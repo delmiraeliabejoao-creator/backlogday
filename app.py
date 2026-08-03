@@ -162,10 +162,10 @@ else:
                 sel = st.multiselect(f"Selecione os itens com problema", lista_itens)
                 pendentes.extend(sel)
 
-            desc = st.text_area("📝 Descrição Detalhada do Problema", height=120)
+                        desc = st.text_area("📝 Descrição Detalhada do Problema", height=120)
             midia = st.file_uploader("📷 Anexar fotos / vídeos", accept_multiple_files=True)
 
-                        if st.button("🚀 GERAR ORDEM"):
+            if st.button("🚀 GERAR ORDEM"):
                 arquivos = ", ".join([arq.name for arq in midia]) if midia else "Sem arquivos anexados"
                 executar('''INSERT INTO ordens
                     (data, tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, status, mecanico, solicitante, midia)
