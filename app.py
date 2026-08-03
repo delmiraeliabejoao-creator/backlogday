@@ -133,7 +133,7 @@ else:
 
     menu = st.tabs(abas)
 
-        # 1. ABRIR ORDEM
+            # 1. ABRIR ORDEM
     if "📝 Abrir Ordem" in abas:
         with menu[abas.index("📝 Abrir Ordem")]:
             st.header("📝 Nova Ordem de Manutenção")
@@ -165,7 +165,7 @@ else:
             desc = st.text_area("📝 Descrição Detalhada do Problema", height=120)
             midia = st.file_uploader("📷 Anexar fotos / vídeos", accept_multiple_files=True)
 
-                        if st.button("🚀 GERAR ORDEM"):
+            if st.button("🚀 GERAR ORDEM"):
                 arquivos = ", ".join([arq.name for arq in midia]) if midia else "Sem arquivos anexados"
                 executar('''INSERT INTO ordens
                     (data, tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, status, mecanico, solicitante, midia)
