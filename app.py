@@ -4,12 +4,14 @@ from fpdf import FPDF
 from dados import *
 from banco import *
 
-# Configuração da página
+# 🎨 CONFIGURAÇÃO INICIAL
 st.set_page_config(
     page_title="BACKLOGDAY",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items=None
 )
+
 # 🔹 ESTILOS PERSONALIZADOS
 st.markdown("""
 <style>
@@ -131,7 +133,7 @@ else:
 
     menu = st.tabs(abas)
 
-            # 1. ABRIR ORDEM
+    # 1. ABRIR ORDEM
     if "📝 Abrir Ordem" in abas:
         with menu[abas.index("📝 Abrir Ordem")]:
             st.header("📝 Nova Ordem de Manutenção")
