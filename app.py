@@ -1,270 +1,25 @@
 # ==================================================
-# 🔹 SISTEMA BACKLOGDAY — VERSÃO COMPLETA FUTURISTA
-# ✅ TEMA: Preto + Ciano/Azul/Verde Neon
-# ✅ ITENS DE INSPEÇÃO: Máquina Base / Cabeçote (automático)
-# ✅ Permissões por cargo + Relatório PDF
-# ✅ Ilustrações: Máquinas florestais no cabeçalho
+# 🔹 BACKLOGDAY.PY — ARQUIVO PRINCIPAL DO SISTEMA
+# ✅ Importa automaticamente BANCO.py + DADOS.py
+# ✅ Tema Preto Futurista · Gestão de Ordens · PDF
+# ✅ Permissões por Cargo · Máquinas + Cabeçotes
 # ==================================================
 
-import json
+# ▶️ IMPORTAÇÃO DOS MÓDULOS
+from BANCO import (
+    criar_pastas,
+    carregar_usuarios, salvar_usuarios,
+    carregar_ordens, salvar_ordens
+)
+from DADOS import (
+    Co, NIVEIS, STATUS,
+    exibir_cabecalho_sistema,
+    escolher_maquina, escolher_cabecote, escolher_sistema_e_item
+)
+
 import os
 from datetime import datetime
-from fpdf import FPDF  # 📦 Instale com: pip install fpdf
-
-# ==================================================
-# 🎨 TEMA FUTURISTA — PALETA DE CORES
-# ==================================================
-class Cores:
-    CIANO_TITULO   = "\033[38;5;51m"
-    AZUL_DESTAQUE  = "\033[38;5;75m"
-    VERDE_SUCESSO  = "\033[38;5;46m"
-    AMARELO_ALERTA = "\033[38;5;226m"
-    VERMELHO_ERRO  = "\033[38;5;196m"
-    BRANCO_TEXTO   = "\033[38;5;255m"
-    CINZA_SUAVE    = "\033[38;5;245m"
-    RESET          = "\033[0m"
-
-Co = Cores
-
-# ==================================================
-# 🖼️ CABEÇALHO VISUAL DO SISTEMA
-# ==================================================
-def exibir_cabecalho_sistema():
-    print(f"\n{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
-    print(f"{Co.AZUL_DESTAQUE}    🚜  BACKLOGDAY — SISTEMA DE GESTÃO DE MANUTENÇÃO  🪓{Co.RESET}")
-    print(f"{Co.CINZA_SUAVE}    Máquinas Florestais · Cabeçotes · Unidades de Corte{Co.RESET}")
-    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
-    print(f"{Co.VERDE_SUCESSO}    🌲 Representação visual: Colhedora + Cabeçote Processador 🌲{Co.RESET}")
-    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
-
-# ==================================================
-# 🏭 MÁQUINAS CADASTRADAS
-# ==================================================
-MAQUINAS = [
-    "HV-10105", "HV-10110", "HV-10111", "HV-10114", "HV-10116",
-    "HV-10117", "HV-10119", "HV-10120", "HV-10121", "HV-10122",
-    "HV-10123", "HV-10080", "HV-10089", "HV-19029", "HV-10164",
-    "HV-10134"
-]
-
-# ==================================================
-# 🏷️ CABEÇOTES CADASTRADOS
-# ==================================================
-CABECOTES = [
-    "CB-12153", "CB-12158", "CB-10159", "CB-12163", "CB-12165",
-    "CB-12166", "CB-12168", "CB-12169", "CB-12170", "CB-12171",
-    "CB-12172", "CB-12144", "CB-12149", "CB-12214", "CB-12106",
-    "CB-12173"
-]
-
-# ==================================================
-# 🔧 ITENS DE INSPEÇÃO — MÁQUINA BASE (sem cabeçote)
-# ==================================================
-SISTEMAS_MAQUINA_BASE = {
-    "MÁQUINA BASE": [
-        "MOTOR", "RADIADOR DE ÁGUA", "RADIADOR DE ÓLEO", "CONDENSADOR",
-        "PROTEÇÃO ANTICHAMAS MANG DIESEL", "BATERIAS", "MANGUEIRAS TANQUE DIESEL",
-        "MANGUEIRAS LINHA SUCÇÃO AR", "ABRAÇADEIRA MANG FIL AR", "PROTEÇÃO MANG SUCÇÃO AR",
-        "MANTA DO SILENCIOSO", "PROTEÇÃO DA TURBINA", "TURBINA", "VAZAMENTO MOTOR",
-        "VAZAMENTO BOMBA DE ÁGUA", "BICO INJETOR", "CHICOTE ELÉTRICO", "ALTERNADOR",
-        "MOTOR DE PARTIDA", "COXINS E PARAFUSOS", "TAMPA DO TANQUE"
-    ],
-    "GIRO": ["VAZAMENTO REDUTOR", "MANGUEIRAS", "SWIVEL"],
-    "COMANDO HIDRÁULICO": [
-        "PROTEÇÃO DO BRAÇO", "VAZAMENTO", "MANGUEIRAS",
-        "CHICOTE ELÉTRICO", "CONECTORES", "VÁLVULAS/SOLENÓIDES"
-    ],
-    "SISTEMA DE LUBRIFICAÇÃO": ["CONEXÕES E MANGUEIRAS", "SISTEMA LINCOLN"],
-    "TRANSMISSÃO": [
-        "BOMBA HIDRÁULICA", "MANGUEIRAS", "MOTOR DE TRAÇÃO",
-        "MANGUEIRAS MOTOR DE TRAÇÃO"
-    ],
-    "MATERIAL RODANTE": [
-        "ROLETES SUP", "ROLETES INF", "PROTEÇÃO DOS ROLETES", "LINK/ SAPATA"
-    ],
-    "PROTEÇÕES": [
-        "GRADES DA MÁQUINA", "FARÓIS", "ESCADA", "CABINE", "MOTOR",
-        "CORRIMÃO", "GRUA", "EXTINTOR", "TAMPÃO INFERIOR DO H"
-    ],
-    "GRUA/BRAÇO/LANÇA": [
-        "CILINDRO", "FOLGAS", "MANGUEIRAS", "TUBULAÇÃO",
-        "DISTRIBUIÇÃO DE GRAXA", "PONTEIRA"
-    ],
-    "CABINE": [
-        "CHAVE GERAL", "CHAVE DE PARTIDA", "FARÓIS DA CABINE",
-        "LIMPADOR DO LEXAN", "CABOS/CONECTORES"
-    ]
-}
-
-# ==================================================
-# 🔧 ITENS DE INSPEÇÃO — CABEÇOTE
-# ==================================================
-SISTEMAS_CABECOTE = {
-    "CABEÇOTE": ["ROTATOR", "MOTOR DO ROTATOR", "BIELA", "MANGUEIRAS"],
-    "UNIDADE DE CORTE": [
-        "SENSORES", "PROTEÇÃO DO SENSOR", "PLACA DO SABRE", "CILINDRO DO SABRE",
-        "MOTOR DE SERRA", "TUBOS", "MANGUEIRAS", "CAIXA DE SERRA"
-    ],
-    "CHASSIS": [
-        "CHASSIS", "CILINDRO DO TILT", "BATENTE DO TILT", "LINK",
-        "MANGUEIRA LANÇA LINK", "SWIVEL MANG LANÇA LINK", "SUPORTE DO LINK", "CAPÔ"
-    ],
-    "ROLOS": [
-        "MOTORES", "SUPORTE DO ROLO", "TAMPA PROTEÇÃO DO MOTOR", "MANGUEIRAS DO ROLO",
-        "BRAÇADEIRA MANG ROLO", "SWIVEL MANG DO ROLO", "CAPA DOS ROLOS", "CAMES",
-        "ROLAMENTO", "ARTICULADORES", "CILINDRO", "ROLO DO DORSO"
-    ],
-    "FACAS": [
-        "CILINDROS", "FACA SUP ESQ", "FACA SUP DIR", "FACA INF ESQ",
-        "FACA INF DIR", "FACA FIXAS", "MANGUEIRAS"
-    ],
-    "COMANDO": [
-        "SUPORTE", "CHICOTE", "CONECTORES", "VÁLVULAS/SOLENÓIDES",
-        "VAZAMENTO", "MANG LINK AO COMANDO", "MÓDULO ELETRÔNICO (MHC)"
-    ]
-}
-
-# 📁 ARQUIVOS E PASTAS
-ARQUIVO_USUARIOS = "backlogday_usuarios.json"
-ARQUIVO_DADOS = "backlogday_ordens.json"
-PASTA_ANEXOS = "anexos_ordens"
-PASTA_RELATORIOS = "relatorios_pdf"
-
-# 🔐 NÍVEIS DE ACESSO
-NIVEIS = {
-    1: "Operador",
-    2: "Mecânico",
-    3: "Almoxarifado",
-    4: "Inspetor",
-    5: "Supervisor de Manutenção",
-    6: "Supervisor de Operação",
-    7: "Coordenador",
-    8: "Gerente",
-    9: "ADMINISTRADOR"
-}
-
-# 📊 STATUS DAS ORDENS
-STATUS = {
-    1: "⏳ AGUARDANDO SERVIÇO",
-    2: "🔧 EM MANUTENÇÃO",
-    3: "⏳ AGUARDANDO PEÇA",
-    4: "📦 PEÇA PARA RETIRADA",
-    5: "⏳ AGUARDANDO FINALIZAÇÃO",
-    6: "✅ ORDEM CONCLUÍDA",
-    7: "🚧 MÁQUINA PARADA",
-    8: "✅ MÁQUINA LIBERADA"
-}
-
-# ==================================================
-# 💾 FUNÇÕES DE DADOS
-# ==================================================
-def carregar_arquivo(arquivo, padrao):
-    try:
-        with open(arquivo, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return padrao
-
-def salvar_arquivo(arquivo, dados):
-    with open(arquivo, "w", encoding="utf-8") as f:
-        json.dump(dados, f, ensure_ascii=False, indent=4)
-
-def criar_pastas():
-    if not os.path.exists(PASTA_ANEXOS): os.makedirs(PASTA_ANEXOS)
-    if not os.path.exists(PASTA_RELATORIOS): os.makedirs(PASTA_RELATORIOS)
-
-# ==================================================
-# 📋 ESCOLHA DE MÁQUINA / CABEÇOTE / SISTEMA / ITEM
-# ==================================================
-def escolher_maquina():
-    print(f"\n{Co.AZUL_DESTAQUE}🏭 MÁQUINAS CADASTRADAS:{Co.RESET}")
-    for i, maq in enumerate(MAQUINAS, 1):
-        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{maq}{Co.RESET}")
-    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
-    while True:
-        try:
-            op = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO da máquina: {Co.RESET}"))
-            if 1 <= op <= len(MAQUINAS): return MAQUINAS[op - 1]
-            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 1 e {len(MAQUINAS)}!{Co.RESET}")
-        except ValueError:
-            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
-
-def escolher_cabecote():
-    print(f"\n{Co.AZUL_DESTAQUE}🏷️ CABEÇOTES CADASTRADOS:{Co.RESET}")
-    print(f"   {Co.CIANO_TITULO} 0{Co.RESET} → {Co.BRANCO_TEXTO}Nenhum (Máquina Base){Co.RESET}")
-    for i, cab in enumerate(CABECOTES, 1):
-        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{cab}{Co.RESET}")
-    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
-    while True:
-        try:
-            op = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO do cabeçote: {Co.RESET}"))
-            if op == 0: return "Nenhum"
-            if 1 <= op <= len(CABECOTES): return CABECOTES[op - 1]
-            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 0 e {len(CABECOTES)}!{Co.RESET}")
-        except ValueError:
-            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
-
-def escolher_sistema_e_item(tem_cabecote):
-    sistemas = SISTEMAS_CABECOTE if tem_cabecote else SISTEMAS_MAQUINA_BASE
-    titulo = "🔧 SISTEMAS DO CABEÇOTE" if tem_cabecote else "🔧 SISTEMAS DA MÁQUINA BASE"
-    lista = list(sistemas.keys())
-
-    print(f"\n{Co.AZUL_DESTAQUE}{titulo}:{Co.RESET}")
-    for i, s in enumerate(lista, 1):
-        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{s}{Co.RESET}")
-    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
-
-    while True:
-        try:
-            op_s = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO do SISTEMA: {Co.RESET}"))
-            if 1 <= op_s <= len(lista):
-                sistema = lista[op_s - 1]
-                break
-            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 1 e {len(lista)}!{Co.RESET}")
-        except ValueError:
-            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
-
-    itens = sistemas[sistema]
-    print(f"\n{Co.AZUL_DESTAQUE}🔧 ITENS — {sistema}:{Co.RESET}")
-    for i, item in enumerate(itens, 1):
-        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{item}{Co.RESET}")
-    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
-
-    while True:
-        try:
-            op_i = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO do ITEM: {Co.RESET}"))
-            if 1 <= op_i <= len(itens):
-                return sistema, itens[op_i - 1]
-            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 1 e {len(itens)}!{Co.RESET}")
-        except ValueError:
-            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
-
-# ==================================================
-# 🔐 LOGIN E CADASTRO DE USUÁRIOS
-# ==================================================
-def cadastrar_usuario(usuarios, nome, senha, nivel):
-    for u in usuarios:
-        if u["nome"].strip().lower() == nome.strip().lower():
-            print(f"{Co.AMARELO_ALERTA}⚠️ Usuário '{nome}' já existe!{Co.RESET}")
-            return False
-    usuarios.append({"id": len(usuarios)+1, "nome": nome.strip(), "senha": senha, "nivel": nivel})
-    salvar_arquivo(ARQUIVO_USUARIOS, usuarios)
-    print(f"{Co.VERDE_SUCESSO}✅ Usuário '{nome}' cadastrado como {NIVEIS[nivel]}!{Co.RESET}")
-    return True
-
-def login(usuarios):
-    exibir_cabecalho_sistema()
-    print(f"{Co.CIANO_TITULO}   🔐  TELA DE ACESSO{Co.RESET}")
-    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
-    nome = input(f"{Co.BRANCO_TEXTO}▸ Usuário: {Co.RESET}")
-    senha = input(f"{Co.BRANCO_TEXTO}▸ Senha:   {Co.RESET}")
-    for u in usuarios:
-        if u["nome"] == nome and u["senha"] == senha:
-            print(f"\n{Co.VERDE_SUCESSO}   ✅ ACESSO CONCEDIDO → {nome}{Co.RESET}")
-            print(f"   {Co.CIANO_TITULO}▸ Perfil: {NIVEIS[u['nivel']]}{Co.RESET}")
-            return u
-    print(f"{Co.VERMELHO_ERRO}   ❌ Usuário ou senha inválidos!{Co.RESET}")
-    return None
+from fpdf import FPDF  # 📦 pip install fpdf
 
 # ==================================================
 # 📦 RELATÓRIO DE PEÇAS — PDF
@@ -272,7 +27,7 @@ def login(usuarios):
 def gerar_relatorio_pecas(ordens, usuario):
     data_relatorio = datetime.now().strftime("%d/%m/%Y %H:%M")
     data_arquivo = datetime.now().strftime("%Y%m%d_%H%M%S")
-    nome_arquivo = f"{PASTA_RELATORIOS}/relatorio_pecas_{data_arquivo}.pdf"
+    nome_arquivo = f"relatorios_pdf/relatorio_pecas_{data_arquivo}.pdf"
     solicitacoes = [o for o in ordens if o.get("solicitacao_pecas")]
 
     if not solicitacoes:
@@ -310,11 +65,40 @@ def gerar_relatorio_pecas(ordens, usuario):
         print(f"{Co.VERMELHO_ERRO}❌ Erro ao gerar PDF: {e}{Co.RESET}")
 
 # ==================================================
+# 🔐 LOGIN E CADASTRO DE USUÁRIOS
+# ==================================================
+def cadastrar_usuario(usuarios, nome, senha, nivel):
+    for u in usuarios:
+        if u["nome"].strip().lower() == nome.strip().lower():
+            print(f"{Co.AMARELO_ALERTA}⚠️ Usuário '{nome}' já existe!{Co.RESET}")
+            return False
+    novo_id = max([u["id"] for u in usuarios], default=0) + 1
+    usuarios.append({"id": novo_id, "nome": nome.strip(), "senha": senha, "nivel": nivel})
+    salvar_usuarios(usuarios)
+    print(f"{Co.VERDE_SUCESSO}✅ Usuário '{nome}' cadastrado como {NIVEIS[nivel]}!{Co.RESET}")
+    return True
+
+def login(usuarios):
+    exibir_cabecalho_sistema()
+    print(f"{Co.CIANO_TITULO}   🔐  TELA DE ACESSO{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+    nome = input(f"{Co.BRANCO_TEXTO}▸ Usuário: {Co.RESET}")
+    senha = input(f"{Co.BRANCO_TEXTO}▸ Senha:   {Co.RESET}")
+    for u in usuarios:
+        if u["nome"] == nome and u["senha"] == senha:
+            print(f"\n{Co.VERDE_SUCESSO}   ✅ ACESSO CONCEDIDO → {nome}{Co.RESET}")
+            print(f"   {Co.CIANO_TITULO}▸ Perfil: {NIVEIS[u['nivel']]}{Co.RESET}")
+            return u
+    print(f"{Co.VERMELHO_ERRO}   ❌ Usuário ou senha inválidos!{Co.RESET}")
+    return None
+
+# ==================================================
 # 📝 FUNÇÕES DE ORDENS
 # ==================================================
 def abrir_ordem(ordens, operador, titulo, descricao, maquina, cabecote, sistema, item, anexos=""):
+    novo_id = max([o["id"] for o in ordens], default=0) + 1
     nova = {
-        "id": len(ordens)+1, "titulo": titulo, "descricao": descricao,
+        "id": novo_id, "titulo": titulo, "descricao": descricao,
         "maquina": maquina, "cabecote": cabecote, "sistema": sistema, "item": item,
         "status": 1, "solicitante_id": operador["id"], "solicitante_nome": operador["nome"],
         "data_abertura": datetime.now().strftime("%d/%m/%Y %H:%M"),
@@ -327,7 +111,7 @@ def abrir_ordem(ordens, operador, titulo, descricao, maquina, cabecote, sistema,
         "observacao_liberacao": "", "liberado_por": ""
     }
     ordens.append(nova)
-    salvar_arquivo(ARQUIVO_DADOS, ordens)
+    salvar_ordens(ordens)
     print(f"\n{Co.VERDE_SUCESSO}══════════════════════════════════════════════{Co.RESET}")
     print(f"{Co.VERDE_SUCESSO}✅ ORDEM #{nova['id']} ABERTA COM SUCESSO{Co.RESET}")
     print(f"{Co.CIANO_TITULO}▸ Máquina: {Co.BRANCO_TEXTO}{maquina}{Co.RESET}  |  {Co.CIANO_TITULO}Cabeçote: {Co.BRANCO_TEXTO}{cabecote}{Co.RESET}")
@@ -342,7 +126,7 @@ def assumir_ordem(ordens, mecanico, id_o):
                 print(f"{Co.AMARELO_ALERTA}⚠️ Ordem #{id_o} não está disponível!{Co.RESET}"); return
             o["status"] = 2; o["responsavel_nome"] = mecanico["nome"]
             o["data_inicio"] = datetime.now().strftime("%d/%m/%Y %H:%M")
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}✅ Ordem #{id_o} assumida → {STATUS[2]}{Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -355,7 +139,7 @@ def solicitar_pecas(ordens, mecanico, id_o, pecas):
             o["solicitacao_pecas"] = pecas
             o["data_solicitacao_pecas"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             o["status"] = 3
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}✅ Peças solicitadas → {STATUS[3]}{Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -366,7 +150,7 @@ def confirmar_recebimento_pecas(ordens, almoxarifado, id_o):
             if o["status"] != 3:
                 print(f"{Co.AMARELO_ALERTA}⚠️ Ordem #{id_o} não aguardando peça!{Co.RESET}"); return
             o["status"] = 4; o["data_recebimento_pecas"] = datetime.now().strftime("%d/%m/%Y %H:%M")
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}✅ Peças recebidas → {STATUS[4]}{Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -376,7 +160,7 @@ def registrar_materiais(ordens, almoxarifado, id_o, materiais):
         if o["id"] == id_o:
             o["materiais_utilizados"] = materiais
             o["data_registro_materiais"] = datetime.now().strftime("%d/%m/%Y %H:%M")
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}✅ Materiais registrados na Ordem #{id_o}{Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -388,7 +172,7 @@ def registrar_parada_maquina(ordens, mecanico, id_o, motivo):
                 print(f"{Co.AMARELO_ALERTA}⚠️ Ordem já fechada/parada!{Co.RESET}"); return
             o["status"] = 7; o["data_parada_maquina"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             o["motivo_parada"] = motivo
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.AMARELO_ALERTA}🚧 MÁQUINA PARADA registrada!{Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -402,7 +186,7 @@ def liberar_maquina_para_operacao(ordens, usuario, id_o, observacao=""):
                 print(f"{Co.AMARELO_ALERTA}⚠️ Máquina não está parada!{Co.RESET}"); return
             o["status"] = 8; o["data_liberacao_maquina"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             o["observacao_liberacao"] = observacao; o["liberado_por"] = usuario["nome"]
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}✅ MÁQUINA LIBERADA por {usuario['nome']}{Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -416,7 +200,7 @@ def finalizar_ordem_mecanico(ordens, mecanico, id_o, observacao, anexos_execucao
                 print(f"{Co.AMARELO_ALERTA}⚠️ Peças pendentes!{Co.RESET}"); return
             o["status"] = 5; o["data_finalizacao_mecanico"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             o["observacao_execucao"] = observacao; o["anexos_execucao"] = anexos_execucao
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}✅ Enviada para conferência → {STATUS[5]}{Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -431,7 +215,7 @@ def concluir_ordem_supervisor(ordens, usuario, id_o, observacao=""):
                 print(f"{Co.AMARELO_ALERTA}⚠️ Apenas GERENTE/ADM fecham em qualquer status!{Co.RESET}"); return
             o["status"] = 6; o["data_conclusao_supervisor"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             o["observacao_conclusao_supervisor"] = observacao
-            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}✅ ORDEM CONCLUÍDA por {usuario['nome']} ({NIVEIS[usuario['nivel']]}){Co.RESET}")
             return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
@@ -468,7 +252,7 @@ def remover_ordem(ordens, usuario, id_o):
         print(f"{Co.VERMELHO_ERRO}❌ Apenas ADM exclui ordens!{Co.RESET}"); return
     for i, o in enumerate(ordens):
         if o["id"] == id_o:
-            ordens.pop(i); salvar_arquivo(ARQUIVO_DADOS, ordens)
+            ordens.pop(i); salvar_ordens(ordens)
             print(f"{Co.VERDE_SUCESSO}🗑️ Ordem #{id_o} REMOVIDA!{Co.RESET}"); return
     print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
@@ -476,16 +260,11 @@ def remover_ordem(ordens, usuario, id_o):
 # 🚀 MENU PRINCIPAL
 # ==================================================
 def menu():
+    os.system("")  # Habilita cores ANSI no Windows
     criar_pastas()
-    usuarios = carregar_arquivo(ARQUIVO_USUARIOS, [])
-    ordens = carregar_arquivo(ARQUIVO_DADOS, [])
 
-    # Criar ADM padrão se não houver usuários
-    if not usuarios:
-        print(f"{Co.AMARELO_ALERTA}⚙️ Criando conta ADMINISTRADOR padrão...{Co.RESET}")
-        usuarios.append({"id":1,"nome":"adm","senha":"adm123","nivel":9})
-        salvar_arquivo(ARQUIVO_USUARIOS, usuarios)
-        print(f"{Co.VERDE_SUCESSO}✅ Usuário: adm  |  Senha: adm123  |  Nível: ADMINISTRADOR{Co.RESET}")
+    usuarios = carregar_usuarios()
+    ordens = carregar_ordens()
 
     # Tela de Login
     usuario_logado = None
@@ -642,5 +421,4 @@ def menu():
 # ▶️ INICIAR SISTEMA
 # ==================================================
 if __name__ == "__main__":
-    os.system("")  # Habilita cores ANSI no Windows
     menu()
