@@ -38,21 +38,19 @@ def criar_pastas():
             print(f"{Co.VERDE}📂 Pasta '{PASTA_RELATORIOS}' criada!{Co.RESET}")
         return True
     except Exception as e:
-        print(f"{Co.VERMELHO_ERRO}❌ Erro ao criar pastas: {e}{Co.RESET}")
+        print(f"{Co.VERMELHO}❌ Erro ao criar pastas: {e}{Co.RESET}")
         return False
 
 # ==================================================
 # 💾 CARREGAR ARQUIVO JSON
 # ==================================================
 def carregar_arquivo(caminho_arquivo, valor_padrao=None):
-    """
-    Carrega um arquivo JSON. Retorna 'valor_padrao' se o arquivo não existir.
-    """
+    """Carrega um arquivo JSON. Retorna 'valor_padrao' se o arquivo não existir."""
     try:
         with open(caminho_arquivo, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"{Co.AMARELO}📭 Arquivo '{caminho_arquivo}' não encontrado. Usando padrão...{Co.RESET}")
+        print(f"{Co.AMARELO}📭 Arquivo '{caminho_arquivo}' não encontrado. Criando novo...{Co.RESET}")
         return valor_padrao if valor_padrao is not None else []
     except json.JSONDecodeError as e:
         print(f"{Co.VERMELHO}⚠️ Arquivo '{caminho_arquivo}' corrompido! Erro: {e}{Co.RESET}")
@@ -118,15 +116,11 @@ def proximo_id(lista):
 # ==================================================
 if __name__ == "__main__":
     print(f"{Co.CIANO}{'═'*50}{Co.RESET}")
-    print(f"{Co.CIANO}   🧪 TESTE DO MÓDULO BANCO.PY{Co.RESET}")
+    print(f"{Co.CIANO}   🧪 TESTE DO MÓDULO banco.py{Co.RESET}")
     print(f"{Co.CIANO}{'═'*50}{Co.RESET}")
-    
     criar_pastas()
-    
     usuarios = carregar_usuarios()
     print(f"\n{Co.VERDE}✅ {len(usuarios)} usuário(s) carregado(s){Co.RESET}")
-    
     ordens = carregar_ordens()
     print(f"{Co.VERDE}✅ {len(ordens)} ordem(ns) carregada(s){Co.RESET}")
-    
     print(f"\n{Co.CIANO}🏁 Módulo funcionando corretamente!{Co.RESET}")
