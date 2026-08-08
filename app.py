@@ -1,17 +1,23 @@
 # ==================================================
-# 🔹 BACKLOGDAY.PY — ARQUIVO PRINCIPAL DO SISTEMA
-# ✅ Importa automaticamente BANCO.py + DADOS.py
+# 🔹 APP.PY — ARQUIVO PRINCIPAL DO SISTEMA
+# ✅ Importa banco.py + dados.py (nomes em minúsculo)
 # ✅ Tema Preto Futurista · Gestão de Ordens · PDF
 # ✅ Permissões por Cargo · Máquinas + Cabeçotes
+# ✅ Compatível com Streamlit
 # ==================================================
 
-# ▶️ IMPORTAÇÃO DOS MÓDULOS
-from BANCO import (
+# ▶️ GARANTE que a pasta atual esteja no caminho de importação
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))
+
+# ▶️ IMPORTAÇÃO DOS MÓDULOS (NOMES EM MINÚSCULO = COMPATÍVEL)
+from banco import (
     criar_pastas,
     carregar_usuarios, salvar_usuarios,
     carregar_ordens, salvar_ordens
 )
-from DADOS import (
+from dados import (
     Co, NIVEIS, STATUS,
     exibir_cabecalho_sistema,
     escolher_maquina, escolher_cabecote, escolher_sistema_e_item
@@ -19,7 +25,7 @@ from DADOS import (
 
 import os
 from datetime import datetime
-from fpdf import FPDF  # 📦 pip install fpdf
+from fpdf import FPDF  # 📦 Instale com: pip install fpdf
 
 # ==================================================
 # 📦 RELATÓRIO DE PEÇAS — PDF
