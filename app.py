@@ -1,332 +1,646 @@
-import streamlit as st
+# ==================================================
+# 🔹 SISTEMA BACKLOGDAY — VERSÃO COMPLETA FUTURISTA
+# ✅ TEMA: Preto + Ciano/Azul/Verde Neon
+# ✅ ITENS DE INSPEÇÃO: Máquina Base / Cabeçote (automático)
+# ✅ Permissões por cargo + Relatório PDF
+# ✅ Ilustrações: Máquinas florestais no cabeçalho
+# ==================================================
+
+import json
+import os
 from datetime import datetime
-from fpdf import FPDF
-from dados import *
-from banco import *
+from fpdf import FPDF  # 📦 Instale com: pip install fpdf
 
-# 🎨 CONFIGURAÇÃO INICIAL
-st.set_page_config(
-    page_title="BACKLOGDAY",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items=None
-)
+# ==================================================
+# 🎨 TEMA FUTURISTA — PALETA DE CORES
+# ==================================================
+class Cores:
+    CIANO_TITULO   = "\033[38;5;51m"
+    AZUL_DESTAQUE  = "\033[38;5;75m"
+    VERDE_SUCESSO  = "\033[38;5;46m"
+    AMARELO_ALERTA = "\033[38;5;226m"
+    VERMELHO_ERRO  = "\033[38;5;196m"
+    BRANCO_TEXTO   = "\033[38;5;255m"
+    CINZA_SUAVE    = "\033[38;5;245m"
+    RESET          = "\033[0m"
 
-# 🔹 ESTILOS PERSONALIZADOS
-st.markdown("""
-<style>
-    * { font-family: 'Segoe UI', sans-serif; }
-    .stApp {
-        background: linear-gradient(135deg, #050814 0%, #0F172A 50%, #050814 100%);
-        color: #E0F7FF;
+Co = Cores
+
+# ==================================================
+# 🖼️ CABEÇALHO VISUAL DO SISTEMA
+# ==================================================
+def exibir_cabecalho_sistema():
+    print(f"\n{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+    print(f"{Co.AZUL_DESTAQUE}    🚜  BACKLOGDAY — SISTEMA DE GESTÃO DE MANUTENÇÃO  🪓{Co.RESET}")
+    print(f"{Co.CINZA_SUAVE}    Máquinas Florestais · Cabeçotes · Unidades de Corte{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+    print(f"{Co.VERDE_SUCESSO}    🌲 Representação visual: Colhedora + Cabeçote Processador 🌲{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+
+# ==================================================
+# 🏭 MÁQUINAS CADASTRADAS
+# ==================================================
+MAQUINAS = [
+    "HV-10105", "HV-10110", "HV-10111", "HV-10114", "HV-10116",
+    "HV-10117", "HV-10119", "HV-10120", "HV-10121", "HV-10122",
+    "HV-10123", "HV-10080", "HV-10089", "HV-19029", "HV-10164",
+    "HV-10134"
+]
+
+# ==================================================
+# 🏷️ CABEÇOTES CADASTRADOS
+# ==================================================
+CABECOTES = [
+    "CB-12153", "CB-12158", "CB-10159", "CB-12163", "CB-12165",
+    "CB-12166", "CB-12168", "CB-12169", "CB-12170", "CB-12171",
+    "CB-12172", "CB-12144", "CB-12149", "CB-12214", "CB-12106",
+    "CB-12173"
+]
+
+# ==================================================
+# 🔧 ITENS DE INSPEÇÃO — MÁQUINA BASE (sem cabeçote)
+# ==================================================
+SISTEMAS_MAQUINA_BASE = {
+    "MÁQUINA BASE": [
+        "MOTOR", "RADIADOR DE ÁGUA", "RADIADOR DE ÓLEO", "CONDENSADOR",
+        "PROTEÇÃO ANTICHAMAS MANG DIESEL", "BATERIAS", "MANGUEIRAS TANQUE DIESEL",
+        "MANGUEIRAS LINHA SUCÇÃO AR", "ABRAÇADEIRA MANG FIL AR", "PROTEÇÃO MANG SUCÇÃO AR",
+        "MANTA DO SILENCIOSO", "PROTEÇÃO DA TURBINA", "TURBINA", "VAZAMENTO MOTOR",
+        "VAZAMENTO BOMBA DE ÁGUA", "BICO INJETOR", "CHICOTE ELÉTRICO", "ALTERNADOR",
+        "MOTOR DE PARTIDA", "COXINS E PARAFUSOS", "TAMPA DO TANQUE"
+    ],
+    "GIRO": ["VAZAMENTO REDUTOR", "MANGUEIRAS", "SWIVEL"],
+    "COMANDO HIDRÁULICO": [
+        "PROTEÇÃO DO BRAÇO", "VAZAMENTO", "MANGUEIRAS",
+        "CHICOTE ELÉTRICO", "CONECTORES", "VÁLVULAS/SOLENÓIDES"
+    ],
+    "SISTEMA DE LUBRIFICAÇÃO": ["CONEXÕES E MANGUEIRAS", "SISTEMA LINCOLN"],
+    "TRANSMISSÃO": [
+        "BOMBA HIDRÁULICA", "MANGUEIRAS", "MOTOR DE TRAÇÃO",
+        "MANGUEIRAS MOTOR DE TRAÇÃO"
+    ],
+    "MATERIAL RODANTE": [
+        "ROLETES SUP", "ROLETES INF", "PROTEÇÃO DOS ROLETES", "LINK/ SAPATA"
+    ],
+    "PROTEÇÕES": [
+        "GRADES DA MÁQUINA", "FARÓIS", "ESCADA", "CABINE", "MOTOR",
+        "CORRIMÃO", "GRUA", "EXTINTOR", "TAMPÃO INFERIOR DO H"
+    ],
+    "GRUA/BRAÇO/LANÇA": [
+        "CILINDRO", "FOLGAS", "MANGUEIRAS", "TUBULAÇÃO",
+        "DISTRIBUIÇÃO DE GRAXA", "PONTEIRA"
+    ],
+    "CABINE": [
+        "CHAVE GERAL", "CHAVE DE PARTIDA", "FARÓIS DA CABINE",
+        "LIMPADOR DO LEXAN", "CABOS/CONECTORES"
+    ]
+}
+
+# ==================================================
+# 🔧 ITENS DE INSPEÇÃO — CABEÇOTE
+# ==================================================
+SISTEMAS_CABECOTE = {
+    "CABEÇOTE": ["ROTATOR", "MOTOR DO ROTATOR", "BIELA", "MANGUEIRAS"],
+    "UNIDADE DE CORTE": [
+        "SENSORES", "PROTEÇÃO DO SENSOR", "PLACA DO SABRE", "CILINDRO DO SABRE",
+        "MOTOR DE SERRA", "TUBOS", "MANGUEIRAS", "CAIXA DE SERRA"
+    ],
+    "CHASSIS": [
+        "CHASSIS", "CILINDRO DO TILT", "BATENTE DO TILT", "LINK",
+        "MANGUEIRA LANÇA LINK", "SWIVEL MANG LANÇA LINK", "SUPORTE DO LINK", "CAPÔ"
+    ],
+    "ROLOS": [
+        "MOTORES", "SUPORTE DO ROLO", "TAMPA PROTEÇÃO DO MOTOR", "MANGUEIRAS DO ROLO",
+        "BRAÇADEIRA MANG ROLO", "SWIVEL MANG DO ROLO", "CAPA DOS ROLOS", "CAMES",
+        "ROLAMENTO", "ARTICULADORES", "CILINDRO", "ROLO DO DORSO"
+    ],
+    "FACAS": [
+        "CILINDROS", "FACA SUP ESQ", "FACA SUP DIR", "FACA INF ESQ",
+        "FACA INF DIR", "FACA FIXAS", "MANGUEIRAS"
+    ],
+    "COMANDO": [
+        "SUPORTE", "CHICOTE", "CONECTORES", "VÁLVULAS/SOLENÓIDES",
+        "VAZAMENTO", "MANG LINK AO COMANDO", "MÓDULO ELETRÔNICO (MHC)"
+    ]
+}
+
+# 📁 ARQUIVOS E PASTAS
+ARQUIVO_USUARIOS = "backlogday_usuarios.json"
+ARQUIVO_DADOS = "backlogday_ordens.json"
+PASTA_ANEXOS = "anexos_ordens"
+PASTA_RELATORIOS = "relatorios_pdf"
+
+# 🔐 NÍVEIS DE ACESSO
+NIVEIS = {
+    1: "Operador",
+    2: "Mecânico",
+    3: "Almoxarifado",
+    4: "Inspetor",
+    5: "Supervisor de Manutenção",
+    6: "Supervisor de Operação",
+    7: "Coordenador",
+    8: "Gerente",
+    9: "ADMINISTRADOR"
+}
+
+# 📊 STATUS DAS ORDENS
+STATUS = {
+    1: "⏳ AGUARDANDO SERVIÇO",
+    2: "🔧 EM MANUTENÇÃO",
+    3: "⏳ AGUARDANDO PEÇA",
+    4: "📦 PEÇA PARA RETIRADA",
+    5: "⏳ AGUARDANDO FINALIZAÇÃO",
+    6: "✅ ORDEM CONCLUÍDA",
+    7: "🚧 MÁQUINA PARADA",
+    8: "✅ MÁQUINA LIBERADA"
+}
+
+# ==================================================
+# 💾 FUNÇÕES DE DADOS
+# ==================================================
+def carregar_arquivo(arquivo, padrao):
+    try:
+        with open(arquivo, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return padrao
+
+def salvar_arquivo(arquivo, dados):
+    with open(arquivo, "w", encoding="utf-8") as f:
+        json.dump(dados, f, ensure_ascii=False, indent=4)
+
+def criar_pastas():
+    if not os.path.exists(PASTA_ANEXOS): os.makedirs(PASTA_ANEXOS)
+    if not os.path.exists(PASTA_RELATORIOS): os.makedirs(PASTA_RELATORIOS)
+
+# ==================================================
+# 📋 ESCOLHA DE MÁQUINA / CABEÇOTE / SISTEMA / ITEM
+# ==================================================
+def escolher_maquina():
+    print(f"\n{Co.AZUL_DESTAQUE}🏭 MÁQUINAS CADASTRADAS:{Co.RESET}")
+    for i, maq in enumerate(MAQUINAS, 1):
+        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{maq}{Co.RESET}")
+    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
+    while True:
+        try:
+            op = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO da máquina: {Co.RESET}"))
+            if 1 <= op <= len(MAQUINAS): return MAQUINAS[op - 1]
+            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 1 e {len(MAQUINAS)}!{Co.RESET}")
+        except ValueError:
+            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
+
+def escolher_cabecote():
+    print(f"\n{Co.AZUL_DESTAQUE}🏷️ CABEÇOTES CADASTRADOS:{Co.RESET}")
+    print(f"   {Co.CIANO_TITULO} 0{Co.RESET} → {Co.BRANCO_TEXTO}Nenhum (Máquina Base){Co.RESET}")
+    for i, cab in enumerate(CABECOTES, 1):
+        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{cab}{Co.RESET}")
+    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
+    while True:
+        try:
+            op = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO do cabeçote: {Co.RESET}"))
+            if op == 0: return "Nenhum"
+            if 1 <= op <= len(CABECOTES): return CABECOTES[op - 1]
+            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 0 e {len(CABECOTES)}!{Co.RESET}")
+        except ValueError:
+            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
+
+def escolher_sistema_e_item(tem_cabecote):
+    sistemas = SISTEMAS_CABECOTE if tem_cabecote else SISTEMAS_MAQUINA_BASE
+    titulo = "🔧 SISTEMAS DO CABEÇOTE" if tem_cabecote else "🔧 SISTEMAS DA MÁQUINA BASE"
+    lista = list(sistemas.keys())
+
+    print(f"\n{Co.AZUL_DESTAQUE}{titulo}:{Co.RESET}")
+    for i, s in enumerate(lista, 1):
+        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{s}{Co.RESET}")
+    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
+
+    while True:
+        try:
+            op_s = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO do SISTEMA: {Co.RESET}"))
+            if 1 <= op_s <= len(lista):
+                sistema = lista[op_s - 1]
+                break
+            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 1 e {len(lista)}!{Co.RESET}")
+        except ValueError:
+            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
+
+    itens = sistemas[sistema]
+    print(f"\n{Co.AZUL_DESTAQUE}🔧 ITENS — {sistema}:{Co.RESET}")
+    for i, item in enumerate(itens, 1):
+        print(f"   {Co.CIANO_TITULO}{i:2d}{Co.RESET} → {Co.BRANCO_TEXTO}{item}{Co.RESET}")
+    print(f"{Co.AZUL_DESTAQUE}─"*35 + Co.RESET)
+
+    while True:
+        try:
+            op_i = int(input(f"{Co.CIANO_TITULO}▸ Escolha o NÚMERO do ITEM: {Co.RESET}"))
+            if 1 <= op_i <= len(itens):
+                return sistema, itens[op_i - 1]
+            print(f"{Co.AMARELO_ALERTA}⚠️ Digite entre 1 e {len(itens)}!{Co.RESET}")
+        except ValueError:
+            print(f"{Co.VERMELHO_ERRO}⚠️ Apenas números!{Co.RESET}")
+
+# ==================================================
+# 🔐 LOGIN E CADASTRO DE USUÁRIOS
+# ==================================================
+def cadastrar_usuario(usuarios, nome, senha, nivel):
+    for u in usuarios:
+        if u["nome"].strip().lower() == nome.strip().lower():
+            print(f"{Co.AMARELO_ALERTA}⚠️ Usuário '{nome}' já existe!{Co.RESET}")
+            return False
+    usuarios.append({"id": len(usuarios)+1, "nome": nome.strip(), "senha": senha, "nivel": nivel})
+    salvar_arquivo(ARQUIVO_USUARIOS, usuarios)
+    print(f"{Co.VERDE_SUCESSO}✅ Usuário '{nome}' cadastrado como {NIVEIS[nivel]}!{Co.RESET}")
+    return True
+
+def login(usuarios):
+    exibir_cabecalho_sistema()
+    print(f"{Co.CIANO_TITULO}   🔐  TELA DE ACESSO{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+    nome = input(f"{Co.BRANCO_TEXTO}▸ Usuário: {Co.RESET}")
+    senha = input(f"{Co.BRANCO_TEXTO}▸ Senha:   {Co.RESET}")
+    for u in usuarios:
+        if u["nome"] == nome and u["senha"] == senha:
+            print(f"\n{Co.VERDE_SUCESSO}   ✅ ACESSO CONCEDIDO → {nome}{Co.RESET}")
+            print(f"   {Co.CIANO_TITULO}▸ Perfil: {NIVEIS[u['nivel']]}{Co.RESET}")
+            return u
+    print(f"{Co.VERMELHO_ERRO}   ❌ Usuário ou senha inválidos!{Co.RESET}")
+    return None
+
+# ==================================================
+# 📦 RELATÓRIO DE PEÇAS — PDF
+# ==================================================
+def gerar_relatorio_pecas(ordens, usuario):
+    data_relatorio = datetime.now().strftime("%d/%m/%Y %H:%M")
+    data_arquivo = datetime.now().strftime("%Y%m%d_%H%M%S")
+    nome_arquivo = f"{PASTA_RELATORIOS}/relatorio_pecas_{data_arquivo}.pdf"
+    solicitacoes = [o for o in ordens if o.get("solicitacao_pecas")]
+
+    if not solicitacoes:
+        print(f"{Co.CINZA_SUAVE}📭 Nenhuma solicitação de peças encontrada.{Co.RESET}")
+        return
+
+    try:
+        pdf = FPDF("P", "mm", "A4")
+        pdf.add_page()
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, "RELATÓRIO DE SOLICITAÇÕES DE PEÇAS", ln=True, align="C")
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(0, 6, f"Data: {data_relatorio} | Por: {usuario['nome']} ({NIVEIS[usuario['nivel']]})", ln=True, align="C")
+        pdf.ln(8)
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(25, 7, "Ordem", border=1)
+        pdf.cell(30, 7, "Máquina", border=1)
+        pdf.cell(30, 7, "Cabeçote", border=1)
+        pdf.cell(45, 7, "Sistema/Item", border=1)
+        pdf.cell(55, 7, "Peças Solicitadas", border=1)
+        pdf.cell(25, 7, "Status", border=1, ln=True)
+        pdf.set_font("Arial", "", 9)
+        for o in solicitacoes:
+            status_texto = STATUS[o["status"]].split(" ", 1)[-1] if " " in STATUS[o["status"]] else STATUS[o["status"]]
+            pdf.cell(25, 7, f"#{o['id']}", border=1)
+            pdf.cell(30, 7, o["maquina"], border=1)
+            pdf.cell(30, 7, o.get("cabecote", "---"), border=1)
+            pdf.cell(45, 7, f"{o.get('sistema','---')[:15]} / {o.get('item','---')[:15]}", border=1)
+            pecas_resumo = o["solicitacao_pecas"][:45] + ("..." if len(o["solicitacao_pecas"])>45 else "")
+            pdf.cell(55, 7, pecas_resumo, border=1)
+            pdf.cell(25, 7, status_texto, border=1, ln=True)
+        pdf.output(nome_arquivo)
+        print(f"{Co.VERDE_SUCESSO}✅ Relatório gerado: {nome_arquivo}{Co.RESET}")
+    except Exception as e:
+        print(f"{Co.VERMELHO_ERRO}❌ Erro ao gerar PDF: {e}{Co.RESET}")
+
+# ==================================================
+# 📝 FUNÇÕES DE ORDENS
+# ==================================================
+def abrir_ordem(ordens, operador, titulo, descricao, maquina, cabecote, sistema, item, anexos=""):
+    nova = {
+        "id": len(ordens)+1, "titulo": titulo, "descricao": descricao,
+        "maquina": maquina, "cabecote": cabecote, "sistema": sistema, "item": item,
+        "status": 1, "solicitante_id": operador["id"], "solicitante_nome": operador["nome"],
+        "data_abertura": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "anexos_abertura": anexos, "responsavel_nome": None, "data_inicio": None,
+        "solicitacao_pecas": "", "data_solicitacao_pecas": "", "data_recebimento_pecas": "",
+        "data_finalizacao_mecanico": None, "observacao_execucao": "", "anexos_execucao": "",
+        "materiais_utilizados": "", "data_registro_materiais": "",
+        "data_conclusao_supervisor": None, "observacao_conclusao_supervisor": "",
+        "data_parada_maquina": "", "motivo_parada": "", "data_liberacao_maquina": "",
+        "observacao_liberacao": "", "liberado_por": ""
     }
-    h1, h2, h3 {
-        color: #00D4FF;
-        font-weight: 600;
-        text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
-    }
-    .stButton>button {
-        background: linear-gradient(90deg, #0077B6, #00B4D8);
-        color: white;
-        border: 1px solid rgba(0, 212, 255, 0.4);
-        border-radius: 8px;
-        box-shadow: 0 0 12px rgba(0, 180, 216, 0.3);
-    }
-    .stButton>button:hover {
-        background: linear-gradient(90deg, #00B4D8, #00D4FF);
-        box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
-    }
-    .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div {
-        background: rgba(10, 20, 40, 0.8);
-        border: 1px solid rgba(0, 212, 255, 0.3);
-        color: #E0F7FF;
-        border-radius: 6px;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background: rgba(5, 10, 25, 0.6);
-        border-radius: 8px;
-        padding: 8px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background: transparent;
-        color: #8FBBDB;
-        border-radius: 6px;
-    }
-    .stTabs [aria-selected="true"] {
-        background: rgba(0, 180, 216, 0.2);
-        color: #00D4FF;
-        border: 1px solid #00D4FF;
-    }
-    .card-ordem {
-        background: rgba(8, 15, 35, 0.9);
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
-        border: 1px solid rgba(0, 212, 255, 0.2);
-    }
-    .stSidebar {
-        background: rgba(5, 8, 20, 0.95);
-        border-right: 1px solid rgba(0, 212, 255, 0.2);
-    }
-</style>
-""", unsafe_allow_html=True)
+    ordens.append(nova)
+    salvar_arquivo(ARQUIVO_DADOS, ordens)
+    print(f"\n{Co.VERDE_SUCESSO}══════════════════════════════════════════════{Co.RESET}")
+    print(f"{Co.VERDE_SUCESSO}✅ ORDEM #{nova['id']} ABERTA COM SUCESSO{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}▸ Máquina: {Co.BRANCO_TEXTO}{maquina}{Co.RESET}  |  {Co.CIANO_TITULO}Cabeçote: {Co.BRANCO_TEXTO}{cabecote}{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}▸ Sistema: {Co.BRANCO_TEXTO}{sistema}{Co.RESET}  ·  Item: {Co.BRANCO_TEXTO}{item}{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}▸ Status: {Co.BRANCO_TEXTO}{STATUS[1]}{Co.RESET}")
+    print(f"{Co.VERDE_SUCESSO}══════════════════════════════════════════════{Co.RESET}")
 
-# 🔹 INICIA BANCO DE DADOS
-iniciar_banco()
+def assumir_ordem(ordens, mecanico, id_o):
+    for o in ordens:
+        if o["id"] == id_o:
+            if o["status"] != 1:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Ordem #{id_o} não está disponível!{Co.RESET}"); return
+            o["status"] = 2; o["responsavel_nome"] = mecanico["nome"]
+            o["data_inicio"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}✅ Ordem #{id_o} assumida → {STATUS[2]}{Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-# ------------------- TELA DE LOGIN -------------------
-if "logado" not in st.session_state:
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        st.markdown("""
-        <div style="text-align:center; padding:30px; border:1px solid rgba(0,212,255,0.4); border-radius:15px; background:rgba(8,15,35,0.9);">
-            <h1 style="font-size:42px;">BACKLOGDAY</h1>
-            <p style="color:#8FBBDB;">Sistema Inteligente de Gestão de Manutenção</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
+def solicitar_pecas(ordens, mecanico, id_o, pecas):
+    for o in ordens:
+        if o["id"] == id_o:
+            if o["status"] != 2:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Ordem #{id_o} não está em manutenção!{Co.RESET}"); return
+            o["solicitacao_pecas"] = pecas
+            o["data_solicitacao_pecas"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            o["status"] = 3
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}✅ Peças solicitadas → {STATUS[3]}{Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-        with st.form("login"):
-            email = st.text_input("E-mail", placeholder="digite seu e-mail")
-            senha = st.text_input("Senha", type="password", placeholder="digite sua senha")
-            entrar = st.form_submit_button("ACESSAR SISTEMA")
+def confirmar_recebimento_pecas(ordens, almoxarifado, id_o):
+    for o in ordens:
+        if o["id"] == id_o:
+            if o["status"] != 3:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Ordem #{id_o} não aguardando peça!{Co.RESET}"); return
+            o["status"] = 4; o["data_recebimento_pecas"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}✅ Peças recebidas → {STATUS[4]}{Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-            if entrar:
-                user = consultar("SELECT * FROM usuarios WHERE email = ? AND senha = ?", (email, senha))
-                if user:
-                    st.session_state.logado = True
-                    st.session_state.id_user = user[0][0]
-                    st.session_state.email = user[0][1]
-                    st.session_state.perfil = user[0][3]
-                    st.rerun()
-                else:
-                    st.error("⚠️ Credenciais inválidas")
+def registrar_materiais(ordens, almoxarifado, id_o, materiais):
+    for o in ordens:
+        if o["id"] == id_o:
+            o["materiais_utilizados"] = materiais
+            o["data_registro_materiais"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}✅ Materiais registrados na Ordem #{id_o}{Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-# ------------------- SISTEMA PRINCIPAL -------------------
-else:
-    perfil = st.session_state.perfil
-    st.sidebar.markdown(f"""
-    <div style="text-align:center; padding:15px; border-bottom:1px solid rgba(0,212,255,0.3);">
-        <h3 style="margin:0;">👤 {perfil}</h3>
-        <p style="color:#8FBBDB; font-size:13px;">{st.session_state.email}</p>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.sidebar.button("🚪 Sair do Sistema"):
-        st.session_state.clear()
-        st.rerun()
+def registrar_parada_maquina(ordens, mecanico, id_o, motivo):
+    for o in ordens:
+        if o["id"] == id_o:
+            if o["status"] in [6,7,8]:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Ordem já fechada/parada!{Co.RESET}"); return
+            o["status"] = 7; o["data_parada_maquina"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            o["motivo_parada"] = motivo
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.AMARELO_ALERTA}🚧 MÁQUINA PARADA registrada!{Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-    # ✅ MONTAGEM CORRETA DAS ABAS
-    abas = []
-    if perfil in ["Administrador", "Operador", "Inspetor de Manutenção"]:
-        abas.append("📝 Abrir Ordem")
-    abas.append("📋 Ordens de Serviço")
-    if perfil in ["Administrador", "Mecânico", "Almoxarifado"]:
-        abas.append("📦 Pedidos de Peças")
-    if perfil in ["Administrador", "Supervisor de Manutenção"]:
-        abas.append("⚙️ Gerenciar")
-    if perfil in ["Administrador", "Almoxarifado"]:
-        abas.append("📄 Relatórios")
-    if perfil == "Administrador":
-        abas.append("👥 Usuários")
+def liberar_maquina_para_operacao(ordens, usuario, id_o, observacao=""):
+    if usuario["nivel"] not in [7,8,9]:
+        print(f"{Co.VERMELHO_ERRO}❌ Sem permissão! Apenas Coordenador/Gerente/ADM.{Co.RESET}"); return
+    for o in ordens:
+        if o["id"] == id_o:
+            if o["status"] != 7:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Máquina não está parada!{Co.RESET}"); return
+            o["status"] = 8; o["data_liberacao_maquina"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            o["observacao_liberacao"] = observacao; o["liberado_por"] = usuario["nome"]
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}✅ MÁQUINA LIBERADA por {usuario['nome']}{Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-    menu = st.tabs(abas)
+def finalizar_ordem_mecanico(ordens, mecanico, id_o, observacao, anexos_execucao):
+    for o in ordens:
+        if o["id"] == id_o:
+            if o["status"] == 7:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Ordem parada — aguarde liberação!{Co.RESET}"); return
+            if o["status"] < 4:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Peças pendentes!{Co.RESET}"); return
+            o["status"] = 5; o["data_finalizacao_mecanico"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            o["observacao_execucao"] = observacao; o["anexos_execucao"] = anexos_execucao
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}✅ Enviada para conferência → {STATUS[5]}{Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-    # 1. ABRIR ORDEM
-    if "📝 Abrir Ordem" in abas:
-        with menu[abas.index("📝 Abrir Ordem")]:
-            st.header("📝 Nova Ordem de Manutenção")
-            tipo = st.radio("Tipo de Equipamento", ["Maquina Base", "Cabeçote"], horizontal=True)
-            lista = MAQUINA_BASE if tipo == "Maquina Base" else CABECOTE
-            cod = st.selectbox("Código do Equipamento", lista)
+def concluir_ordem_supervisor(ordens, usuario, id_o, observacao=""):
+    pode_todos = usuario["nivel"] in [8,9]
+    for o in ordens:
+        if o["id"] == id_o:
+            if o["status"] == 7:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Ordem parada — liberação primeiro!{Co.RESET}"); return
+            if not pode_todos and o["status"] != 5:
+                print(f"{Co.AMARELO_ALERTA}⚠️ Apenas GERENTE/ADM fecham em qualquer status!{Co.RESET}"); return
+            o["status"] = 6; o["data_conclusao_supervisor"] = datetime.now().strftime("%d/%m/%Y %H:%M")
+            o["observacao_conclusao_supervisor"] = observacao
+            salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}✅ ORDEM CONCLUÍDA por {usuario['nome']} ({NIVEIS[usuario['nivel']]}){Co.RESET}")
+            return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-            if tipo == "Maquina Base":
-                grupos = [
-                    ("CABINE", ITENS_MAQUINA_BASE.get("CABINE", [])),
-                    ("BRAÇO", ITENS_MAQUINA_BASE.get("BRAÇO", [])),
-                    ("LANÇA", ITENS_MAQUINA_BASE.get("LANÇA", [])),
-                    ("MAQUINA BASE", ITENS_MAQUINA_BASE.get("MAQUINA BASE", []))
-                ]
-            else:
-                grupos = [
-                    ("DESGALHAMENTO", ITENS_CABECOTE.get("DESGALHAMENTO", [])),
-                    ("ROLO", ITENS_CABECOTE.get("ROLO", [])),
-                    ("TILT", ITENS_CABECOTE.get("TILT", [])),
-                    ("ROTATOR", ITENS_CABECOTE.get("ROTATOR", []) + ITENS_CABECOTE.get("MOTOR DE SERRA", []) + ITENS_CABECOTE.get("CHASSIS", []))
-                ]
+def listar_ordens(ordens, usuario):
+    print(f"\n{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}   📋 LISTA DE ORDENS — {NIVEIS[usuario['nivel']].upper()}{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+    if not ordens:
+        print(f"{Co.CINZA_SUAVE}   📭 Nenhuma ordem cadastrada.{Co.RESET}"); return
+    encontrou = False
+    for o in ordens:
+        exibir = False
+        if usuario["nivel"] == 1: exibir = o["solicitante_id"] == usuario["id"]
+        elif usuario["nivel"] == 2: exibir = o["status"] == 1 or o["responsavel_nome"] == usuario["nome"]
+        elif usuario["nivel"] == 3: exibir = o["status"] in (1,3)
+        else: exibir = True
+        if not exibir: continue
+        encontrou = True
+        icones = {1:"⏳",2:"🔧",3:"⏳",4:"📦",5:"⏳",6:"✅",7:"🚧",8:"✅"}[o["status"]]
+        print(f"\n{Co.AZUL_DESTAQUE}{icones} ORDEM #{o['id']}{Co.RESET}  {Co.BRANCO_TEXTO}{STATUS[o['status']]}{Co.RESET}")
+        print(f"   {Co.CIANO_TITULO}▸ Máquina:{Co.RESET} {o['maquina']}  |  {Co.CIANO_TITULO}Cabeçote:{Co.RESET} {o.get('cabecote','---')}")
+        print(f"   {Co.CIANO_TITULO}▸ Sistema:{Co.RESET} {o.get('sistema','---')}  ·  Item: {o.get('item','---')}")
+        print(f"   {Co.CIANO_TITULO}▸ Solicitante:{Co.RESET} {o['solicitante_nome']}  ·  {Co.CIANO_TITULO}Abertura:{Co.RESET} {o['data_abertura']}")
+        if o.get("solicitacao_pecas"): print(f"   {Co.CIANO_TITULO}▸ Peças:{Co.RESET} {o['solicitacao_pecas']}")
+        if o["status"] == 7: print(f"   {Co.AMARELO_ALERTA}▸ Motivo Parada:{Co.RESET} {o.get('motivo_parada','---')}")
+        if o["status"] == 8: print(f"   {Co.VERDE_SUCESSO}▸ Liberado por:{Co.RESET} {o.get('liberado_por','---')}")
+        if o["status"] == 6: print(f"   {Co.VERDE_SUCESSO}▸ Concluído:{Co.RESET} {o.get('data_conclusao_supervisor','---')}")
+    if not encontrou:
+        print(f"{Co.CINZA_SUAVE}   📭 Nenhuma ordem disponível.{Co.RESET}")
 
-            pendentes = []
-            for nome_grupo, lista_itens in grupos:
-                st.subheader(f"🔹 {nome_grupo}")
-                sel = st.multiselect(f"Selecione os itens com problema", lista_itens)
-                pendentes.extend(sel)
+def remover_ordem(ordens, usuario, id_o):
+    if usuario["nivel"] != 9:
+        print(f"{Co.VERMELHO_ERRO}❌ Apenas ADM exclui ordens!{Co.RESET}"); return
+    for i, o in enumerate(ordens):
+        if o["id"] == id_o:
+            ordens.pop(i); salvar_arquivo(ARQUIVO_DADOS, ordens)
+            print(f"{Co.VERDE_SUCESSO}🗑️ Ordem #{id_o} REMOVIDA!{Co.RESET}"); return
+    print(f"{Co.VERMELHO_ERRO}❌ Ordem #{id_o} não encontrada!{Co.RESET}")
 
-            desc = st.text_area("📝 Descrição Detalhada do Problema", height=120)
-            midia = st.file_uploader("📷 Anexar fotos / vídeos", accept_multiple_files=True)
+# ==================================================
+# 🚀 MENU PRINCIPAL
+# ==================================================
+def menu():
+    criar_pastas()
+    usuarios = carregar_arquivo(ARQUIVO_USUARIOS, [])
+    ordens = carregar_arquivo(ARQUIVO_DADOS, [])
 
-            if st.button("🚀 GERAR ORDEM"):
-                arquivos = ", ".join([arq.name for arq in midia]) if midia else "Sem arquivos anexados"
-                executar('''INSERT INTO ordens
-                    (data, tipo_equipamento, codigo_equipamento, itens_pendentes, descricao, status, mecanico, solicitante, midia)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                    (
-                        datetime.now().strftime("%d/%m/%Y %H:%M"),
-                        tipo,
-                        cod,
-                        str(pendentes),
-                        desc,
-                        "Aguardando Serviço",
-                        "",
-                        st.session_state.email,
-                        arquivos
-                    ))
-                st.success("✅ Ordem gerada com sucesso!")
+    # Criar ADM padrão se não houver usuários
+    if not usuarios:
+        print(f"{Co.AMARELO_ALERTA}⚙️ Criando conta ADMINISTRADOR padrão...{Co.RESET}")
+        usuarios.append({"id":1,"nome":"adm","senha":"adm123","nivel":9})
+        salvar_arquivo(ARQUIVO_USUARIOS, usuarios)
+        print(f"{Co.VERDE_SUCESSO}✅ Usuário: adm  |  Senha: adm123  |  Nível: ADMINISTRADOR{Co.RESET}")
 
-    # 2. ORDENS DE SERVIÇO
-    with menu[abas.index("📋 Ordens de Serviço")]:
-        st.header("📋 Ordens de Serviço")
-        if st.button("🔄 Atualizar"):
-            st.rerun()
+    # Tela de Login
+    usuario_logado = None
+    while not usuario_logado:
+        usuario_logado = login(usuarios)
+        if not usuario_logado:
+            input(f"\n{Co.CINZA_SUAVE}Pressione ENTER para tentar novamente...{Co.RESET}")
 
-        ordens = consultar("SELECT * FROM ordens ORDER BY data DESC")
-        if not ordens:
-            st.info("📭 Nenhuma ordem registrada ainda")
-        for o in ordens:
-            cor = STATUS.get(o[6], "#888888")
-            st.markdown(f'''
-            <div class="card-ordem">
-                <strong>#{o[0]} | {o[2]} | <span style="color:{cor};">{o[6] if o[6] else "Aguardando Serviço"}</span></strong><br>
-                <span style="color:#8FBBDB;">Data: {o[1]} | Solicitante: {o[8]}</span><br>
-                Itens: {o[3]}
-            </div>
-            ''', unsafe_allow_html=True)
+    # Loop Principal
+    while True:
+        cargo = NIVEIS[usuario_logado["nivel"]]
+        print(f"\n{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
+        print(f"{Co.CIANO_TITULO}   🚀 PAINEL PRINCIPAL · {usuario_logado['nome']} · {cargo}{Co.RESET}")
+        print(f"{Co.CIANO_TITULO}{'═'*70}{Co.RESET}")
 
-            with st.expander(f"📝 Ver detalhes completos da Ordem #{o[0]}"):
-                st.write("**Descrição do Problema:**")
-                st.info(o[4] if o[4] else "Nenhuma descrição informada")
-                st.write("**Arquivos Anexados:**")
-                st.info(o[9] if len(o) > 9 and o[9] else "Nenhum arquivo enviado")
+        n = usuario_logado["nivel"]
+        opcoes = []
+        if n == 1:
+            opcoes = ["📝 Abrir Ordem de Manutenção", "📄 Minhas Ordens"]
+        elif n == 2:
+            opcoes = ["🔧 Assumir Ordem", "📋 Solicitar Peças", "🚧 Registrar Parada de Máquina", "⏳ Finalizar Ordem", "📄 Listar Ordens"]
+        elif n == 3:
+            opcoes = ["✅ Confirmar Recebimento de Peças", "📦 Registrar Materiais", "📊 Gerar Relatório de Peças (PDF)", "📄 Listar Ordens"]
+        elif n == 5:
+            opcoes = ["✅ Concluir Ordem", "📄 Listar Ordens"]
+        elif n == 7:
+            opcoes = ["✅ Concluir Ordem", "🔓 Liberar Máquina", "📄 Listar Ordens"]
+        elif n == 8:
+            opcoes = ["✅ Concluir QUALQUER Ordem", "🔓 Liberar Máquina", "📄 Listar Ordens"]
+        elif n == 9:
+            opcoes = ["✅ Concluir QUALQUER Ordem", "🔓 Liberar Máquina", "📄 Listar Ordens", "🗑️ Excluir Ordem", "👤 Cadastrar Novo Usuário", "📊 Relatório Geral"]
 
-            if perfil == "Mecânico" and (o[6] in ["Aguardando Serviço", "Aguardando Peça"] or o[6] is None):
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button(f"✅ Concluir #{o[0]}"):
-                        executar("UPDATE ordens SET status = 'Concluída', mecanico = ? WHERE id = ?", (st.session_state.email, o[0]))
-                        st.rerun()
-                with col2:
-                    if st.button(f"📦 Pedir Peças #{o[0]}"):
-                        with st.form(f"pedido_{o[0]}"):
-                            qtd = st.number_input("Quantidade", min_value=1, value=1)
-                            cod_p = st.text_input("Código da Peça")
-                            nome_p = st.text_input("Nome da Peça")
-                            if st.form_submit_button("Confirmar"):
-                                executar('''INSERT INTO pedidos_pecas
-                                    (id_ordem, quantidade, codigo_peca, nome_peca, solicitante, tipo_equipamento)
-                                    VALUES (?, ?, ?, ?, ?, ?)''',
-                                    (o[0], qtd, cod_p, nome_p, st.session_state.email, o[2]))
-                                executar("UPDATE ordens SET status = 'Aguardando Peça' WHERE id = ?", (o[0],))
-                                st.rerun()
+        for i, txt in enumerate(opcoes, 1):
+            print(f"   {Co.AZUL_DESTAQUE}{i}.{Co.RESET} {txt}")
+        print(f"   {Co.AZUL_DESTAQUE}0.{Co.RESET} 🚪 Sair do Sistema")
+        escolha = input(f"\n{Co.CIANO_TITULO}▸ Selecione uma opção: {Co.RESET}")
 
-            if perfil == "Almoxarifado" and o[6] == "Aguardando Peça":
-                if st.button(f"🔵 Confirmar Pedido #{o[0]}"):
-                    executar("UPDATE ordens SET status = 'Peça Solicitada' WHERE id = ?", (o[0],))
-                    st.rerun()
-                if st.button(f"🔔 Notificar Chegada #{o[0]}"):
-                    st.success("📤 Notificação enviada!")
+        def pedir_id():
+            try: return int(input(f"{Co.CIANO_TITULO}▸ Número da Ordem: {Co.RESET}"))
+            except: print(f"{Co.VERMELHO_ERRO}⚠️ Digite um número válido!{Co.RESET}"); return None
 
-            if perfil == "Supervisor de Manutenção" and o[6] == "Concluída":
-                if st.button(f"⚫ Finalizar Ordem #{o[0]}"):
-                    executar("UPDATE ordens SET status = 'Finalizada' WHERE id = ?", (o[0],))
-                    st.rerun()
-            st.markdown("---")
+        # ══════════════ OPÇÃO 1 ══════════════
+        if escolha == "1":
+            if n == 1:
+                print(f"\n{Co.AZUL_DESTAQUE}📝 ABRIR NOVA ORDEM DE MANUTENÇÃO{Co.RESET}")
+                titulo = input(f"{Co.BRANCO_TEXTO}▸ Título / Assunto: {Co.RESET}")
+                descricao = input(f"{Co.BRANCO_TEXTO}▸ Descreva o problema: {Co.RESET}")
+                maquina = escolher_maquina()
+                cabecote = escolher_cabecote()
+                tem_cab = (cabecote != "Nenhum")
+                sistema, item = escolher_sistema_e_item(tem_cab)
+                anexos = input(f"{Co.BRANCO_TEXTO}▸ Anexos / Observações (opcional): {Co.RESET}")
+                abrir_ordem(ordens, usuario_logado, titulo, descricao, maquina, cabecote, sistema, item, anexos)
 
-    # 3. PEDIDOS DE PEÇAS
-    if "📦 Pedidos de Peças" in abas:
-        with menu[abas.index("📦 Pedidos de Peças")]:
-            st.header("📦 Pedidos de Peças")
-            ped = consultar("SELECT * FROM pedidos_pecas ORDER BY id DESC")
-            if not ped:
-                st.info("📭 Nenhum pedido registrado")
-            for p in ped:
-                st.markdown(f'''
-                <div class="card-ordem">
-                    <strong>Ordem #{p[1]}</strong> | Qtd: {p[2]}<br>
-                    Peça: {p[3]} - {p[4]}<br>
-                    Solicitante: {p[5]} | Equipamento: {p[6]}
-                </div>
-                ''', unsafe_allow_html=True)
+            elif n == 2:
+                id_o = pedir_id()
+                if id_o: assumir_ordem(ordens, usuario_logado, id_o)
 
-    # 4. GERENCIAR
-    if "⚙️ Gerenciar" in abas:
-        with menu[abas.index("⚙️ Gerenciar")]:
-            st.header("⚙️ Alterar Status")
-            ordens = consultar("SELECT id, codigo_equipamento, status FROM ordens")
-            if ordens:
-                ids = [f"#{o[0]} - {o[1]} ({o[2]})" for o in ordens]
-                sel = st.selectbox("Selecione a Ordem", ids)
-                id_sel = sel.split(" - ")[0].replace("#","")
-                novo_status = st.selectbox("Novo Status", list(STATUS.keys()))
-                if st.button("🔄 Atualizar Status"):
-                    executar("UPDATE ordens SET status = ? WHERE id = ?", (novo_status, id_sel))
-                    st.success("✅ Atualizado!")
+            elif n in (3,5,7,8,9):
+                id_o = pedir_id()
+                if id_o:
+                    obs = input(f"{Co.BRANCO_TEXTO}▸ Observações de conclusão (opcional): {Co.RESET}")
+                    concluir_ordem_supervisor(ordens, usuario_logado, id_o, obs)
 
-    # 5. RELATÓRIOS
-    if "📄 Relatórios" in abas:
-        with menu[abas.index("📄 Relatórios")]:
-            st.header("📄 Relatórios")
-            filtro = st.selectbox("Filtrar por Status", ["Todos"] + list(STATUS.keys()))
-            if st.button("📥 Gerar Relatório PDF"):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", "B", 18)
-                pdf.cell(0, 12, "RELATÓRIO BACKLOGDAY", ln=True, align="C")
-                pdf.ln(8)
-                pdf.set_font("Arial", size=11)
-                dados = consultar("SELECT * FROM ordens") if filtro == "Todos" else consultar("SELECT * FROM ordens WHERE status = ?", (filtro,))
-                for o in dados:
-                    pdf.cell(0, 8, f"#{o[0]} | {o[2]} | {o[6] if o[6] else 'Aguardando Serviço'} | {o[1]}", ln=True)
-                nome_arq = f"relatorio_{datetime.now().strftime('%d%m%Y_%H%M')}.pdf"
-                pdf.output(nome_arq)
-                with open(nome_arq, "rb") as f:
-                    st.download_button("⬇️ Baixar", f, file_name=nome_arq)
+        # ══════════════ OPÇÃO 2 ══════════════
+        elif escolha == "2":
+            if n == 2:
+                id_o = pedir_id()
+                if id_o:
+                    pecas = input(f"{Co.BRANCO_TEXTO}▸ Peças e quantidades: {Co.RESET}")
+                    solicitar_pecas(ordens, usuario_logado, id_o, pecas)
 
-    # 6. USUÁRIOS (SÓ ADM)
-    if "👥 Usuários" in abas:
-        with menu[abas.index("👥 Usuários")]:
-            st.header("👤 Gerenciar Usuários")
-            st.subheader("📋 Usuários Cadastrados")
-            lista_usuarios = consultar("SELECT id, email, perfil FROM usuarios ORDER BY id")
-            if lista_usuarios:
-                for u in lista_usuarios:
-                    id_user, email, perfil_user = u
-                    st.markdown(f"""
-                    <div class="card-ordem">
-                        <strong>ID: {id_user}</strong><br>
-                        E-mail: {email}<br>
-                        Perfil: {perfil_user}
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if email != st.session_state.email:
-                        if st.button(f"🗑️ Excluir {email}", key=f"del_{id_user}"):
-                            executar("DELETE FROM usuarios WHERE id = ?", (id_user,))
-                            st.success(f"✅ {email} excluído!")
-                            st.rerun()
-                    else:
-                        st.info("🔒 Não pode excluir seu próprio acesso")
-                    st.markdown("---")
-            else:
-                st.info("📭 Nenhum usuário cadastrado")
+            elif n == 3:
+                id_o = pedir_id()
+                if id_o: confirmar_recebimento_pecas(ordens, usuario_logado, id_o)
 
-            st.subheader("➕ Cadastrar Novo")
-            with st.form("cad_user"):
-                em = st.text_input("E-mail")
-                se = st.text_input("Senha", type="password")
-                pe = st.selectbox("Perfil", PERFIS)
-                if st.form_submit_button("✅ Cadastrar"):
-                    try:
-                        executar("INSERT INTO usuarios (email, senha, perfil) VALUES (?, ?, ?)", (em, se, pe))
-                        st.success("✅ Cadastrado!")
-                        st.rerun()
-                    except:
-                        st.error("⚠️ E-mail já existe")
+            elif n in (7,8,9):
+                id_o = pedir_id()
+                if id_o:
+                    obs = input(f"{Co.BRANCO_TEXTO}▸ Observações de liberação (opcional): {Co.RESET}")
+                    liberar_maquina_para_operacao(ordens, usuario_logado, id_o, obs)
+
+        # ══════════════ OPÇÃO 3 ══════════════
+        elif escolha == "3":
+            if n == 2:
+                id_o = pedir_id()
+                if id_o:
+                    motivo = input(f"{Co.BRANCO_TEXTO}▸ Motivo da parada: {Co.RESET}")
+                    registrar_parada_maquina(ordens, usuario_logado, id_o, motivo)
+
+            elif n == 3:
+                id_o = pedir_id()
+                if id_o:
+                    mat = input(f"{Co.BRANCO_TEXTO}▸ Materiais utilizados: {Co.RESET}")
+                    registrar_materiais(ordens, usuario_logado, id_o, mat)
+
+            elif n in (5,7,8,9):
+                listar_ordens(ordens, usuario_logado)
+
+        # ══════════════ OPÇÃO 4 ══════════════
+        elif escolha == "4":
+            if n == 2:
+                id_o = pedir_id()
+                if id_o:
+                    obs = input(f"{Co.BRANCO_TEXTO}▸ Observações de execução: {Co.RESET}")
+                    anex = input(f"{Co.BRANCO_TEXTO}▸ Anexos (opcional): {Co.RESET}")
+                    finalizar_ordem_mecanico(ordens, usuario_logado, id_o, obs, anex)
+
+            elif n == 3:
+                gerar_relatorio_pecas(ordens, usuario_logado)
+
+            elif n == 9:
+                id_o = pedir_id()
+                if id_o: remover_ordem(ordens, usuario_logado, id_o)
+
+        # ══════════════ OPÇÃO 5 ══════════════
+        elif escolha == "5":
+            if n == 2:
+                listar_ordens(ordens, usuario_logado)
+
+            elif n == 9:
+                print(f"\n{Co.CIANO_TITULO}👤 CADASTRAR NOVO USUÁRIO{Co.RESET}")
+                nome = input(f"{Co.BRANCO_TEXTO}▸ Nome do usuário: {Co.RESET}")
+                senha = input(f"{Co.BRANCO_TEXTO}▸ Senha: {Co.RESET}")
+                print(f"{Co.CINZA_SUAVE}Níveis: 1=Op 2=Mec 3=Alm 4=Insp 5=SupMan 6=SupOp 7=Coord 8=Ger 9=ADM{Co.RESET}")
+                try:
+                    nivel = int(input(f"{Co.BRANCO_TEXTO}▸ Nível de acesso: {Co.RESET}"))
+                    cadastrar_usuario(usuarios, nome, senha, nivel)
+                except:
+                    print(f"{Co.VERMELHO_ERRO}⚠️ Nível inválido!{Co.RESET}")
+
+        # ══════════════ OPÇÃO 6 ══════════════
+        elif escolha == "6" and n == 9:
+            total = len(ordens)
+            print(f"\n{Co.CIANO_TITULO}📊 RELATÓRIO GERAL{Co.RESET}")
+            print(f"   {Co.CIANO_TITULO}Total de Ordens:{Co.RESET} {Co.BRANCO_TEXTO}{total}{Co.RESET}")
+            for s in STATUS:
+                qtd = sum(1 for o in ordens if o["status"] == s)
+                if qtd > 0:
+                    print(f"   {Co.AZUL_DESTAQUE}{STATUS[s]}{Co.RESET}: {Co.BRANCO_TEXTO}{qtd}{Co.RESET}")
+
+        # ══════════════ OPÇÃO 0 ══════════════
+        elif escolha == "0":
+            print(f"\n{Co.VERDE_SUCESSO}👋 Encerrando sessão... Até logo!{Co.RESET}"); break
+
+        # ══════════════ LISTAR ORDENS (demais opções) ══════════════
+        elif escolha in ("2","3","4","5") and n in (1,3,5):
+            listar_ordens(ordens, usuario_logado)
+
+        else:
+            print(f"{Co.VERMELHO_ERRO}⚠️ Opção inválida! Tente novamente.{Co.RESET}")
+
+# ==================================================
+# ▶️ INICIAR SISTEMA
+# ==================================================
+if __name__ == "__main__":
+    os.system("")  # Habilita cores ANSI no Windows
+    menu()
