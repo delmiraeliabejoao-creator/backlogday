@@ -10,15 +10,15 @@
 # ==================================================
 class Cores:
     """Paleta de cores para terminal — Tema Preto Futurista"""
-    PRETO_FUNDO    = "\033[48;5;234m"   # Fundo escuro
-    CIANO_TITULO   = "\033[38;5;51m"    # Ciano brilhante
-    AZUL_DESTAQUE  = "\033[38;5;75m"    # Azul neon
-    VERDE_SUCESSO  = "\033[38;5;46m"    # Verde neon
-    AMARELO_ALERTA = "\033[38;5;226m"   # Amarelo
-    VERMELHO_ERRO  = "\033[38;5;196m"   # Vermelho neon
-    BRANCO_TEXTO   = "\033[38;5;255m"   # Texto branco suave
-    CINZA_SUAVE    = "\033[38;5;245m"   # Texto secundário
-    RESET          = "\033[0m"          # Reset cor
+    PRETO_FUNDO    = "\033[48;5;234m"
+    CIANO_TITULO   = "\033[38;5;51m"
+    AZUL_DESTAQUE  = "\033[38;5;75m"
+    VERDE_SUCESSO  = "\033[38;5;46m"
+    AMARELO_ALERTA = "\033[38;5;226m"
+    VERMELHO_ERRO  = "\033[38;5;196m"
+    BRANCO_TEXTO   = "\033[38;5;255m"
+    CINZA_SUAVE    = "\033[38;5;245m"
+    RESET          = "\033[0m"
 
 Co = Cores
 
@@ -43,7 +43,7 @@ CABECOTES = [
 ]
 
 # ==================================================
-# 🔧 ITENS DE INSPEÇÃO — MÁQUINA BASE (sem cabeçote)
+# 🔧 ITENS DE INSPEÇÃO — MÁQUINA BASE
 # ==================================================
 SISTEMAS_MAQUINA_BASE = {
     "MÁQUINA BASE": [
@@ -125,7 +125,7 @@ NIVEIS = {
 }
 
 # ==================================================
-# 📊 STATUS DAS ORDENS DE MANUTENÇÃO
+# 📊 STATUS DAS ORDENS
 # ==================================================
 STATUS = {
     1: "⏳ AGUARDANDO SERVIÇO",
@@ -159,7 +159,7 @@ PERMISSOES = {
 }
 
 # ==================================================
-# 🖼️ CABEÇALHO VISUAL DO SISTEMA
+# 🖼️ CABEÇALHO VISUAL
 # ==================================================
 def exibir_cabecalho_sistema():
     """Exibe o cabeçalho estilizado do sistema"""
@@ -246,8 +246,8 @@ def escolher_sistema_e_item(tem_cabecote):
 # ==================================================
 if __name__ == "__main__":
     exibir_cabecalho_sistema()
-    print(f"{Co.VERDE}✅ Módulo DADOS carregado com sucesso!{Co.RESET}")
-    print(f"{Co.CIANO}   → {len(MAQUINAS)} Máquinas cadastradas{Co.RESET}")
-    print(f"{Co.CIANO}   → {len(CABECOTES)} Cabeçotes cadastrados{Co.RESET}")
-    print(f"{Co.CIANO}   → {len(NIVEIS)} Níveis de acesso{Co.RESET}")
-    print(f"{Co.CIANO}   → {len(STATUS)} Status de ordem{Co.RESET}")
+    print(f"{Co.VERDE_SUCESSO}✅ Módulo dados carregado com sucesso!{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}   → {len(MAQUINAS)} Máquinas cadastradas{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}   → {len(CABECOTES)} Cabeçotes cadastrados{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}   → {len(NIVEIS)} Níveis de acesso{Co.RESET}")
+    print(f"{Co.CIANO_TITULO}   → {len(STATUS)} Status de ordem{Co.RESET}")
