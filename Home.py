@@ -3,10 +3,8 @@ from banco import carregar_usuarios, salvar_usuarios, carregar_ordens, salvar_or
 from dados import MAQUINAS, CABECOTES, SISTEMAS_MAQUINA_BASE, SISTEMAS_CABECOTE, NIVEIS, STATUS
 from datetime import datetime
 
-# Configuração da página
 st.set_page_config(page_title="BACKLOGDAY - Gestão de Manutenção", layout="wide")
 
-# Inicializar sessão
 if "usuario" not in st.session_state:
     st.session_state.usuario = None
 if "pagina" not in st.session_state:
@@ -46,7 +44,6 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     st.title(f"🚜 BACKLOGDAY — Olá, {u['nome']} ({NIVEIS[u['nivel']]})")
     st.divider()
 
-    # Montar menu — Excluir Ordem só aparece para ADMINISTRADOR (nível 9)
     opcoes_menu = [
         "📋 Listar Ordens",
         "➕ Abrir Ordem",
@@ -57,12 +54,11 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
         "📊 Relatórios"
     ]
     if u["nivel"] == 9:
-        opcoes_menu.insert(6, "🗑️ Excluir Ordem")  # Insere antes de Relatórios
+        opcoes_menu.insert(6, "🗑️ EXCLUIR ORDEM — RÁPIDO")
     opcoes_menu.append("🚪 Sair")
 
     menu = st.sidebar.radio("Menu", opcoes_menu)
 
-    # Sair
     if menu == "🚪 Sair":
         st.session_state.usuario = None
         st.session_state.pagina = "login"
@@ -88,7 +84,7 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
                 st.divider()
 
     # ==================================================
-    # ➕ ABRIR ORDEM — COM CATEGORIAS SEPARADAS
+    # ➕ ABRIR ORDEM
     # ==================================================
     elif menu == "➕ Abrir Ordem":
         if u["nivel"] not in [1, 2, 4, 5, 7, 8, 9]:
@@ -223,37 +219,71 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
                         st.rerun()
 
     # ==================================================
-    # 🗑️ EXCLUIR ORDEM — SÓ ADMINISTRADOR
+    # 🗑️ EXCLUIR ORDEM — RÁPIDO POR NÚMERO
     # ==================================================
-    elif menu == "🗑️ Excluir Ordem":
+    elif menu == "🗑️ EXCLUIR ORDEM — RÁPIDO":
         if u["nivel"] != 9:
             st.error("❌ Apenas ADMINISTRADOR pode excluir ordens!")
         else:
-            st.subheader("🗑️ Excluir Ordem")
-            st.warning("⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL! A ordem será apagada permanentemente.")
+            st.header("🗑️ EXCLUIR ORDEM — RÁPIDO")
+            st.warning("⚠️ ATENÇÃO: A ordem será APAGADA DEFINITIVAMENTE!")
             st.divider()
 
             if not ordens:
-                st.info("Nenhuma ordem cadastrada para excluir.")
+                st.info("Nenhuma ordem cadastrada.")
             else:
-                opcoes = [f"#{o['id']} — {o.get('categoria','')} — {o['equipamento']} — {STATUS[o['status']]}" for o in ordens]
-                id_escolhida = st.selectbox("Selecione a Ordem para EXCLUIR", opcoes)
-                id_num = int(id_escolhida.split("#")[1].split(" ")[0])
+                # 📋 Lista rápida com botão APAGAR em CADA ordem
+                st.subheader("Lista de Ordens — Clique para Apagar:")
+                st.divider()
+
+                for o in ordens:
+                    col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 2, 1])
+                    with col1:
+                        st.write(f"**#{o['id']}**")
+                    with col2:
+                        st.write(f"{o.get('categoria', '---')}")
+                    with col3:
+                        st.write(f"{o['equipamento']}")
+                    with col4:
+                        st.write(f"{STATUS[o['status']]}")
+                    with col5:
+                        # Botão de APAGAR direto
+                        if st.button(f"🗑️ Apagar", key=f"del_{o['id']}", type="secondary"):
+                            st.session_state[f"confirmar_{o['id']}"] = True
+                            st.rerun()
+
+                    # Confirmação abaixo do botão
+                    if st.session_state.get(f"confirmar_{o['id']}", False):
+                        confirm = st.warning(f"⚠️ Confirmar exclusão da ORDEM #{o['id']}?")
+                        col_sim, col_nao = st.columns(2)
+                        with col_sim:
+                            if st.button("✅ SIM, APAGAR!", type="primary", key=f"sim_{o['id']}"):
+                                ordens[:] = [x for x in ordens if x["id"] != o["id"]]
+                                salvar_ordens(ordens)
+                                st.success(f"✅ ORDEM #{o['id']} APAGADA COM SUCESSO!")
+                                st.session_state[f"confirmar_{o['id']}"] = False
+                                st.rerun()
+                        with col_nao:
+                            if st.button("❌ NÃO, CANCELAR", key=f"nao_{o['id']}"):
+                                st.session_state[f"confirmar_{o['id']}"] = False
+                                st.rerun()
+                    st.divider()
 
                 st.divider()
-                st.warning(f"Você está prestes a EXCLUIR a Ordem #{id_num}!")
-                confirmacao = st.text_input("Digite CONFIRMAR para apagar:")
-
-                if st.button("🗑️ EXCLUIR ORDEM", type="primary") and confirmacao == "CONFIRMAR":
+                st.subheader("🔢 Apagar por Número (mais rápido ainda):")
+                id_direto = st.number_input("Digite o NÚMERO da Ordem:", min_value=1, step=1)
+                if st.button("🗑️ APAGAR AGORA!", type="primary"):
+                    encontrou = False
                     for i, o in enumerate(ordens):
-                        if o["id"] == id_num:
+                        if o["id"] == id_direto:
                             ordens.pop(i)
                             salvar_ordens(ordens)
-                            st.success(f"✅ Ordem #{id_num} foi APAGADA com sucesso!")
+                            st.success(f"✅ ORDEM #{id_direto} APAGADA COM SUCESSO!")
+                            encontrou = True
                             st.rerun()
                             break
-                elif confirmacao not in ["", "CONFIRMAR"]:
-                    st.error("Digite CONFIRMAR corretamente para apagar a ordem!")
+                    if not encontrou:
+                        st.error(f"❌ Ordem #{id_direto} NÃO ENCONTRADA!")
 
     # ==================================================
     # ⚙️ CADASTRAR USUÁRIO
