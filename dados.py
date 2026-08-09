@@ -1,5 +1,5 @@
 # ==================================================
-# 🔹 dados.py — SEM CORES
+# 🔹 dados.py — SEM CORES · CORRIGIDO
 # ==================================================
 
 # 🏭 MÁQUINAS CADASTRADAS
@@ -153,7 +153,6 @@ def escolher_sistema_e_item(tem_cabecote):
     for i, s in enumerate(lista, 1):
         print(f"   {i:2d} → {s}")
     print("-"*35)
-    while True5)
     while True:
         try:
             op_s = int(input("  Escolha o NUMERO do SISTEMA: "))
