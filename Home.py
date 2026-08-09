@@ -46,16 +46,21 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     st.title(f"🚜 BACKLOGDAY — Olá, {u['nome']} ({NIVEIS[u['nivel']]})")
     st.divider()
 
-    menu = st.sidebar.radio("Menu", [
+    # Montar menu — Excluir Ordem só aparece para ADMINISTRADOR (nível 9)
+    opcoes_menu = [
         "📋 Listar Ordens",
         "➕ Abrir Ordem",
         "🔧 Assumir Ordem",
         "📦 Solicitar Peças",
         "✅ Finalizar Ordem",
         "⚙️ Cadastrar Usuário",
-        "📊 Relatórios",
-        "🚪 Sair"
-    ])
+        "📊 Relatórios"
+    ]
+    if u["nivel"] == 9:
+        opcoes_menu.insert(6, "🗑️ Excluir Ordem")  # Insere antes de Relatórios
+    opcoes_menu.append("🚪 Sair")
+
+    menu = st.sidebar.radio("Menu", opcoes_menu)
 
     # Sair
     if menu == "🚪 Sair":
@@ -92,19 +97,15 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
             st.subheader("Abrir Nova Ordem")
             st.divider()
 
-            # 🔑 ESCOLHA DA CATEGORIA — PRIMEIRO PASSO
             categoria = st.radio("**Selecione a Categoria:**", ["MÁQUINA", "CABEÇOTE"], horizontal=True)
-
             titulo = st.text_input("Título / Assunto")
             descricao = st.text_area("Descrição do Problema")
 
             equipamento = None
             sistema = None
             item = None
-
             st.divider()
 
-            # 🚜 CATEGORIA: MÁQUINA
             if categoria == "MÁQUINA":
                 equipamento = st.selectbox("Selecione a Máquina", MAQUINAS)
                 st.divider()
@@ -113,7 +114,6 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
                 itens_maq = SISTEMAS_MAQUINA_BASE[sistema]
                 item = st.selectbox("Item / Componente", itens_maq)
 
-            # ✂️ CATEGORIA: CABEÇOTE
             elif categoria == "CABEÇOTE":
                 equipamento = st.selectbox("Selecione o Cabeçote", CABECOTES)
                 st.divider()
@@ -223,6 +223,39 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
                         st.rerun()
 
     # ==================================================
+    # 🗑️ EXCLUIR ORDEM — SÓ ADMINISTRADOR
+    # ==================================================
+    elif menu == "🗑️ Excluir Ordem":
+        if u["nivel"] != 9:
+            st.error("❌ Apenas ADMINISTRADOR pode excluir ordens!")
+        else:
+            st.subheader("🗑️ Excluir Ordem")
+            st.warning("⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL! A ordem será apagada permanentemente.")
+            st.divider()
+
+            if not ordens:
+                st.info("Nenhuma ordem cadastrada para excluir.")
+            else:
+                opcoes = [f"#{o['id']} — {o.get('categoria','')} — {o['equipamento']} — {STATUS[o['status']]}" for o in ordens]
+                id_escolhida = st.selectbox("Selecione a Ordem para EXCLUIR", opcoes)
+                id_num = int(id_escolhida.split("#")[1].split(" ")[0])
+
+                st.divider()
+                st.warning(f"Você está prestes a EXCLUIR a Ordem #{id_num}!")
+                confirmacao = st.text_input("Digite CONFIRMAR para apagar:")
+
+                if st.button("🗑️ EXCLUIR ORDEM", type="primary") and confirmacao == "CONFIRMAR":
+                    for i, o in enumerate(ordens):
+                        if o["id"] == id_num:
+                            ordens.pop(i)
+                            salvar_ordens(ordens)
+                            st.success(f"✅ Ordem #{id_num} foi APAGADA com sucesso!")
+                            st.rerun()
+                            break
+                elif confirmacao not in ["", "CONFIRMAR"]:
+                    st.error("Digite CONFIRMAR corretamente para apagar a ordem!")
+
+    # ==================================================
     # ⚙️ CADASTRAR USUÁRIO
     # ==================================================
     elif menu == "⚙️ Cadastrar Usuário":
@@ -252,7 +285,6 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
         st.subheader("Relatório Geral")
         st.write(f"**Total de Ordens:** {len(ordens)}")
 
-        # Por Categoria
         st.divider()
         st.subheader("Por Categoria")
         qtd_maquina = sum(1 for o in ordens if o.get("categoria") == "MÁQUINA")
@@ -260,7 +292,6 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
         st.write(f"🚜 **Máquina:** {qtd_maquina} ordens")
         st.write(f"✂️ **Cabeçote:** {qtd_cabecote} ordens")
 
-        # Por Status
         st.divider()
         st.subheader("Por Status")
         for s in STATUS:
