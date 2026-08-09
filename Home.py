@@ -5,10 +5,13 @@ from datetime import datetime
 
 st.set_page_config(page_title="BACKLOGDAY - Gestão de Manutenção", layout="wide")
 
+# Inicializar sessão
 if "usuario" not in st.session_state:
     st.session_state.usuario = None
 if "pagina" not in st.session_state:
     st.session_state.pagina = "login"
+if "tela_selecionada" not in st.session_state:
+    st.session_state.tela_selecionada = "listar"
 
 usuarios = carregar_usuarios()
 ordens = carregar_ordens()
@@ -29,6 +32,7 @@ if st.session_state.pagina == "login":
                 if u["nome"] == nome and u["senha"] == senha:
                     st.session_state.usuario = u
                     st.session_state.pagina = "principal"
+                    st.session_state.tela_selecionada = "listar"
                     st.success(f"Bem-vindo, {u['nome']}! Perfil: {NIVEIS[u['nivel']]}")
                     st.rerun()
                     break
@@ -38,37 +42,66 @@ if st.session_state.pagina == "login":
     st.divider()
     st.info("🔑 Acesso padrão: Usuário: adm | Senha: adm123")
 
-# ------------------- PAINEL PRINCIPAL -------------------
+# ------------------- PAINEL PRINCIPAL COM MENU DE ÍCONES -------------------
 elif st.session_state.pagina == "principal" and st.session_state.usuario:
     u = st.session_state.usuario
     st.title(f"🚜 BACKLOGDAY — Olá, {u['nome']} ({NIVEIS[u['nivel']]})")
     st.divider()
 
-    opcoes_menu = [
-        "📋 Listar Ordens",
-        "➕ Abrir Ordem",
-        "🔧 Assumir Ordem",
-        "📦 Solicitar Peças",
-        "✅ Finalizar Ordem",
-        "⚙️ Cadastrar Usuário",
-        "📊 Relatórios"
+    # ==================================================
+    # 🧭 MENU PRINCIPAL — ÍCONES em GRADE (não lista)
+    # ==================================================
+    st.subheader("📋 MENU PRINCIPAL")
+    st.divider()
+
+    # Definir todos os botões com ícone e identificador
+    botoes_menu = [
+        ("📋", "Listar Ordens", "listar"),
+        ("➕", "Abrir Ordem", "abrir"),
+        ("🔧", "Assumir Ordem", "assumir"),
+        ("📦", "Solicitar Peças", "pecas"),
+        ("✅", "Finalizar Ordem", "finalizar"),
+        ("⚙️", "Cadastrar Usuário", "cadastrar"),
+        ("📊", "Relatórios", "relatorios"),
     ]
+
+    # Excluir Ordem só aparece para ADMINISTRADOR
     if u["nivel"] == 9:
-        opcoes_menu.insert(6, "🗑️ EXCLUIR ORDEM — RÁPIDO")
-    opcoes_menu.append("🚪 Sair")
+        botoes_menu.insert(6, ("🗑️", "Excluir Ordem", "excluir"))
 
-    menu = st.sidebar.radio("Menu", opcoes_menu)
+    # Sair sempre no final
+    botoes_menu.append(("🚪", "Sair", "sair"))
 
-    if menu == "🚪 Sair":
+    # Exibir em grade — 3 colunas por linha
+    cols = st.columns(3)
+    for idx, (icone, label, tag) in enumerate(botoes_menu):
+        with cols[idx % 3]:
+            # Botão destacado quando selecionado
+            eh_ativo = st.session_state.tela_selecionada == tag
+            tipo_botao = "primary" if eh_ativo else "secondary"
+            if st.button(f"{icone}  {label}", type=tipo_botao, use_container_width=True):
+                st.session_state.tela_selecionada = tag
+                st.rerun()
+
+    st.divider()
+
+    # ==================================================
+    # 📄 CONTEÚDO — conforme tela selecionada
+    # ==================================================
+    tela = st.session_state.tela_selecionada
+
+    # 🚪 Sair
+    if tela == "sair":
         st.session_state.usuario = None
         st.session_state.pagina = "login"
+        st.session_state.tela_selecionada = "listar"
         st.rerun()
 
     # ==================================================
     # 📋 LISTAR ORDENS
     # ==================================================
-    elif menu == "📋 Listar Ordens":
-        st.subheader("Lista de Ordens de Manutenção")
+    elif tela == "listar":
+        st.subheader("📋 Lista de Ordens de Manutenção")
         if not ordens:
             st.info("Nenhuma ordem cadastrada.")
         else:
@@ -86,11 +119,11 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     # ==================================================
     # ➕ ABRIR ORDEM
     # ==================================================
-    elif menu == "➕ Abrir Ordem":
+    elif tela == "abrir":
         if u["nivel"] not in [1, 2, 4, 5, 7, 8, 9]:
             st.error("Sem permissão para abrir ordens!")
         else:
-            st.subheader("Abrir Nova Ordem")
+            st.subheader("➕ Abrir Nova Ordem")
             st.divider()
 
             categoria = st.radio("**Selecione a Categoria:**", ["MÁQUINA", "CABEÇOTE"], horizontal=True)
@@ -143,11 +176,11 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     # ==================================================
     # 🔧 ASSUMIR ORDEM
     # ==================================================
-    elif menu == "🔧 Assumir Ordem":
+    elif tela == "assumir":
         if u["nivel"] != 2:
             st.error("Apenas Mecânicos podem assumir ordens!")
         else:
-            st.subheader("Assumir Ordem")
+            st.subheader("🔧 Assumir Ordem")
             ordens_abertas = [o for o in ordens if o["status"] == 1]
             if not ordens_abertas:
                 st.info("Nenhuma ordem disponível.")
@@ -168,11 +201,11 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     # ==================================================
     # 📦 SOLICITAR PEÇAS
     # ==================================================
-    elif menu == "📦 Solicitar Peças":
+    elif tela == "pecas":
         if u["nivel"] != 2:
             st.error("Apenas Mecânicos podem solicitar peças!")
         else:
-            st.subheader("Solicitar Peças")
+            st.subheader("📦 Solicitar Peças")
             ordens_em_andamento = [o for o in ordens if o["status"] == 2 and o.get("responsavel_nome") == u["nome"]]
             if not ordens_em_andamento:
                 st.info("Nenhuma ordem em manutenção.")
@@ -194,8 +227,8 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     # ==================================================
     # ✅ FINALIZAR ORDEM
     # ==================================================
-    elif menu == "✅ Finalizar Ordem":
-        st.subheader("Finalizar Ordem")
+    elif tela == "finalizar":
+        st.subheader("✅ Finalizar Ordem")
         pode_todas = u["nivel"] in [8, 9]
         if pode_todas:
             ordens_finalizaveis = [o for o in ordens if o["status"] in [4, 5]]
@@ -219,20 +252,19 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
                         st.rerun()
 
     # ==================================================
-    # 🗑️ EXCLUIR ORDEM — RÁPIDO POR NÚMERO
+    # 🗑️ EXCLUIR ORDEM — SÓ ADMINISTRADOR
     # ==================================================
-    elif menu == "🗑️ EXCLUIR ORDEM — RÁPIDO":
+    elif tela == "excluir":
         if u["nivel"] != 9:
             st.error("❌ Apenas ADMINISTRADOR pode excluir ordens!")
         else:
-            st.header("🗑️ EXCLUIR ORDEM — RÁPIDO")
+            st.subheader("🗑️ Excluir Ordem — Rápido")
             st.warning("⚠️ ATENÇÃO: A ordem será APAGADA DEFINITIVAMENTE!")
             st.divider()
 
             if not ordens:
                 st.info("Nenhuma ordem cadastrada.")
             else:
-                # 📋 Lista rápida com botão APAGAR em CADA ordem
                 st.subheader("Lista de Ordens — Clique para Apagar:")
                 st.divider()
 
@@ -247,14 +279,12 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
                     with col4:
                         st.write(f"{STATUS[o['status']]}")
                     with col5:
-                        # Botão de APAGAR direto
                         if st.button(f"🗑️ Apagar", key=f"del_{o['id']}", type="secondary"):
                             st.session_state[f"confirmar_{o['id']}"] = True
                             st.rerun()
 
-                    # Confirmação abaixo do botão
                     if st.session_state.get(f"confirmar_{o['id']}", False):
-                        confirm = st.warning(f"⚠️ Confirmar exclusão da ORDEM #{o['id']}?")
+                        st.warning(f"⚠️ Confirmar exclusão da ORDEM #{o['id']}?")
                         col_sim, col_nao = st.columns(2)
                         with col_sim:
                             if st.button("✅ SIM, APAGAR!", type="primary", key=f"sim_{o['id']}"):
@@ -269,8 +299,7 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
                                 st.rerun()
                     st.divider()
 
-                st.divider()
-                st.subheader("🔢 Apagar por Número (mais rápido ainda):")
+                st.subheader("🔢 Apagar por Número:")
                 id_direto = st.number_input("Digite o NÚMERO da Ordem:", min_value=1, step=1)
                 if st.button("🗑️ APAGAR AGORA!", type="primary"):
                     encontrou = False
@@ -288,11 +317,11 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     # ==================================================
     # ⚙️ CADASTRAR USUÁRIO
     # ==================================================
-    elif menu == "⚙️ Cadastrar Usuário":
+    elif tela == "cadastrar":
         if u["nivel"] != 9:
             st.error("Apenas ADMINISTRADOR pode cadastrar usuários!")
         else:
-            st.subheader("Cadastrar Novo Usuário")
+            st.subheader("⚙️ Cadastrar Novo Usuário")
             nome_novo = st.text_input("Nome do Usuário")
             senha_nova = st.text_input("Senha", type="password")
             nivel_novo = st.selectbox("Nível de Acesso", list(NIVEIS.keys()), format_func=lambda x: f"{x} - {NIVEIS[x]}")
@@ -311,8 +340,8 @@ elif st.session_state.pagina == "principal" and st.session_state.usuario:
     # ==================================================
     # 📊 RELATÓRIOS
     # ==================================================
-    elif menu == "📊 Relatórios":
-        st.subheader("Relatório Geral")
+    elif tela == "relatorios":
+        st.subheader("📊 Relatório Geral")
         st.write(f"**Total de Ordens:** {len(ordens)}")
 
         st.divider()
